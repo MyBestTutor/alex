@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<title>🏡 영어 놀이터 홈</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<style>
+  :root{
+    --bg:#fffacd; --panel:#fff; --accent:#ff8c00; --shadow:rgba(255,165,0,.25);
+    --btn1:#ffeb3b; --btn1s:#fbc02d;
+    --btn2:#ff9800; --btn2s:#ef6c00;
+    --btn3:#8bc34a; --btn3s:#689f38;
+    --btnSel:#29b6f6; --btnSelS:#0288d1;
+  }
+  body{
+    margin:0; min-height:100vh; display:flex; align-items:center; justify-content:center;
+    background:var(--bg); font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+  }
+  .wrap{ width:min(900px,96vw); }
+  .card{ background:var(--panel); border-radius:20px; padding:22px; box-shadow:0 10px 30px var(--shadow); border:4px solid var(--accent); }
+  h1{ margin:0 0 18px; font-size:2.2rem; color:#ff4500; text-align:center; text-shadow:1px 1px 0 #ffd700; }
+  /* custom file picker */
+  #fileInput{ display:none; } /* hide native input to avoid '선택된 파일 없음' */
+  .picker{ display:flex; align-items:center; justify-content:center; gap:12px; margin:0 auto 18px; flex-wrap:wrap;}
+  .pick-btn{ background:var(--btnSel); color:#fff; border:none; border-radius:12px; padding:12px 16px; font-weight:900; cursor:pointer; box-shadow:0 4px 0 var(--btnSelS); }
+  .filename{ font-weight:900; color:#0f172a; background:#fff8e1; border:2px dashed var(--accent); border-radius:12px; padding:10px 14px; min-width:220px; text-align:center; }
+  .grid{ display:grid; gap:14px; grid-template-columns: repeat(auto-fit, minmax(260px,1fr)); }
+  .menu{ display:flex; align-items:center; justify-content:space-between; gap:14px; padding:16px 18px; border-radius:14px; text-decoration:none; color:#333; font-weight:800; box-shadow:0 4px 0 rgba(0,0,0,.2); }
+  .m1{ background:var(--btn1); box-shadow:0 4px 0 var(--btn1s); }
+  .m1:hover{ background:#ffc107; }
+  .m2{ background:var(--btn2); color:#fff; box-shadow:0 4px 0 var(--btn2s); }
+  .m2:hover{ background:#fb8c00; }
+  .m3{ background:var(--btn3); color:#fff; box-shadow:0 4px 0 var(--btn3s); }
+  .m3:hover{ background:#7cb342; }
+  .fname{ font-size:.9rem; font-weight:900; }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h1>🏡 영어 놀이터 ✨</h1>
+
+      <div class="picker">
+        <input id="fileInput" type="file" accept=".json,.txt"/>
+        <label for="fileInput" class="pick-btn">📂 문장 파일 선택</label>
+        <span id="fileName" class="filename">파일을 선택하세요</span>
+      </div>
+
+      <div class="grid">
+        <a href="flashcard_game.html" class="menu m1">
+          <div>🧠 단어 카드 게임</div>
+          <div>➜</div>
+        </a>
+        <a href="sentence_practice.html" class="menu m2" id="linkPractice">
+          <div>🎙️ 발음 연습 놀이</div>
+          <div class="fname" id="fnamePractice">파일 필요</div>
+        </a>
+        <a href="sentence_recorder.html" class="menu m3" id="linkRecorder">
+          <div>🧩 문장 만들기 게임</div>
+          <div class="fname" id="fnameRecorder">파일 필요</div>
+        </a>
+      </div>
+    </div>
+  </div>
+
+<script>
+function parseToSentences(text, filename){
+  const lower=(filename||'').toLowerCase();
+  if(lower.endsWith('.json')){
+    try{
+      const data=JSON.parse(text);
+      if(Array.isArray(data)){
+        const list=[];
+        for(const item of data){
+          if(typeof item==='string'){ list.push(item); }
+          else if(item && typeof item==='object'){
+            if(typeof item.sentence==='string') list.push(item.sentence);
+            else if(typeof item.en==='string') list.push(item.en);
+            else if(typeof item.back==='string') list.push(item.back);
+          }
+        }
+        return list;
+      }
+    }catch(e){ alert('JSON 파싱 오류: '+e.message); return null; }
+  }
+  if(lower.endsWith('.txt')){
+    return text.split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
+  }
+  alert('지원 형식: .json 또는 .txt'); return null;
+}
+
+const input=document.getElementById('fileInput');
+const fileNameEl=document.getElementById('fileName');
+const fname1=document.getElementById('fnamePractice');
+const fname2=document.getElementById('fnameRecorder');
+
+function setNames(name){
+  fname1.textContent=name||'파일 필요';
+  fname2.textContent=name||'파일 필요';
+  fileNameEl.textContent=name||'파일을 선택하세요';
+}
+
+input.addEventListener('change', async (e)=>{
+  const f=e.target.files && e.target.files[0];
+  if(!f) return;
+  const text=await f.text();
+  const list=parseToSentences(text, f.name);
+  if(!list || list.length===0){ alert('문장 목록이 비어 있습니다.'); return; }
+  sessionStorage.setItem('SENTENCE_LIST_JSON', JSON.stringify(list));
+  sessionStorage.setItem('SENTENCE_FILE_NAME', f.name);
+  setNames(f.name);
+});
+
+(function(){
+  const n=sessionStorage.getItem('SENTENCE_FILE_NAME');
+  if(n){ setNames(n); }
+})();
+</script>
+</body>
+</html>

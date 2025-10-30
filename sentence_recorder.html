@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<title>🧩 문장 만들기 게임 – 클린 그린</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+  :root{
+    --mint:#ecfdf5; --mint2:#d1fae5; --mint3:#a7f3d0; --mint4:#6ee7b7;
+    --mint5:#34d399; --mint6:#10b981; --mint7:#059669; --ink:#064e3b;
+  }
+  *{box-sizing:border-box}
+  body{ margin:0; min-height:100vh; display:flex; align-items:center; justify-content:center; padding:20px;
+        background:linear-gradient(180deg,#f0fdf4,#ecfeff); font-family:Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; color:var(--ink); }
+  .wrap{ width:min(900px,96vw); background:#ffffffee; backdrop-filter:blur(8px); border-radius:24px; padding:20px;
+         border:1px solid rgba(0,0,0,.06); box-shadow:0 24px 48px rgba(0,0,0,.08); }
+  h1{ margin:0 0 8px; font-size:2rem; color:#059669; text-align:center; }
+  a.home{ text-decoration:none; background:linear-gradient(180deg, #10b981, #059669); color:#fff; padding:10px 14px; border-radius:12px; display:inline-block; margin-bottom:10px; font-weight:900; }
+  .ttsbar{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; justify-content:center; margin:8px 0 12px;}
+  .ttsbar label{ font-weight:800; }
+  .quiz{ background:#fff; border-radius:18px; border:1px solid rgba(0,0,0,.06); box-shadow:0 12px 20px rgba(0,0,0,.08); padding:18px; }
+  #speakButton{ margin-bottom:22px; }
+  .target{ min-height:120px; border:3px dashed var(--mint3); background:var(--mint); border-radius:16px; padding:16px; display:flex; flex-wrap:wrap; justify-content:center; align-items:center; margin-bottom:16px; font-weight:900; color:#065f46; }
+  .bank{ border:2px solid var(--mint3); background:#f7fee7; border-radius:14px; padding:10px; display:flex; flex-wrap:wrap; justify-content:center; }
+  .chip{ padding:10px 16px; margin:8px; cursor:pointer; color:#fff; border:none; border-radius:12px; font-weight:900; background:linear-gradient(180deg, var(--mint5), var(--mint6)); box-shadow:0 6px 12px rgba(16,185,129,.35); }
+  .btnrow{ display:flex; flex-wrap:wrap; justify-content:center; gap:10px; margin-top:12px; }
+  .btn{ padding:12px 18px; border:none; border-radius:14px; font-weight:900; cursor:pointer; color:#fff; background:linear-gradient(180deg, var(--mint6), var(--mint7)); box-shadow:0 8px 16px rgba(0,0,0,.12); }
+  .btn.ghost{ background:#e2e8f0; color:#0f172a; }
+  .note{ margin-top:10px; padding:10px; border-radius:12px; border:1px dashed var(--mint3); display:none; }
+  .ok{ box-shadow:0 0 0 4px rgba(52,211,153,.35) inset; }
+  .bad{ box-shadow:0 0 0 4px rgba(239,68,68,.25) inset; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🧩 문장 만들기 게임</h1>
+  <a href="index.html" class="home">🏠 홈으로</a>
+
+  <!-- TTS Controls -->
+  <div class="ttsbar">
+    <label>🎚️ 속도 <input id="ttsRate" type="range" min="0.5" max="1.2" step="0.05" value="0.85"></label>
+    <label>🎵 톤 <input id="ttsPitch" type="range" min="0.8" max="1.3" step="0.05" value="1.00"></label>
+    <label>🗣️ 보이스 <select id="ttsVoice"></select></label>
+  </div>
+
+  <div id="needFile" class="note">먼저 <b>index.html</b>에서 문장 파일을 선택해 주세요.</div>
+
+  <div class="quiz" id="game" style="display:none;">
+    <button class="btn ghost" id="speakButton" disabled>🎧 문장 듣기</button>
+    <div id="target" class="target" data-ph="문장을 만들어 보세요.">문장을 만들어 보세요.</div>
+    <div id="bank" class="bank"></div>
+    <div id="feedback" class="note"></div>
+    <div class="btnrow">
+      <button class="btn ghost" id="btnReset">🔄 다시 하기</button>
+      <button class="btn" id="btnNext">➡️ 다음 문장</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ==== WebAudio SFX ==== */
+let audioCtx=null;
+function unlock(){
+  try{ if(!audioCtx) audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+    if(audioCtx.state==='suspended') audioCtx.resume();
+    const b=audioCtx.createBuffer(1,1,22050); const s=audioCtx.createBufferSource(); s.buffer=b; s.connect(audioCtx.destination); s.start(0);}catch(e){}
+}
+['pointerdown','touchstart','keydown'].forEach(ev=>window.addEventListener(ev,unlock,{once:true,passive:true}));
+
+function clickSfx(){ if(!audioCtx) return; const o=audioCtx.createOscillator(), g=audioCtx.createGain();
+  o.type='sine'; o.frequency.value=520; g.gain.value=0.0001;
+  g.gain.exponentialRampToValueAtTime(0.18, audioCtx.currentTime+0.01);
+  g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime+0.08);
+  o.connect(g).connect(audioCtx.destination); o.start(); o.stop(audioCtx.currentTime+0.09); }
+function okSfx(){ if(!audioCtx) return; const a=audioCtx.createOscillator(), b=audioCtx.createOscillator(), g=audioCtx.createGain();
+  a.type='sine'; a.frequency.value=880; b.type='sine'; b.frequency.value=1320;
+  g.gain.setValueAtTime(0, audioCtx.currentTime); g.gain.linearRampToValueAtTime(0.22, audioCtx.currentTime+0.01);
+  g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime+0.35);
+  a.connect(g); b.connect(g); g.connect(audioCtx.destination); a.start(); b.start(); a.stop(audioCtx.currentTime+0.36); b.stop(audioCtx.currentTime+0.36); }
+function badSfx(){ if(!audioCtx) return; const o=audioCtx.createOscillator(), g=audioCtx.createGain();
+  o.type='triangle'; o.frequency.value=220; g.gain.setValueAtTime(0, audioCtx.currentTime);
+  g.gain.linearRampToValueAtTime(0.18, audioCtx.currentTime+0.01);
+  g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime+0.3);
+  o.connect(g).connect(audioCtx.destination); o.start(); o.frequency.exponentialRampToValueAtTime(120, audioCtx.currentTime+0.25); o.stop(audioCtx.currentTime+0.32); }
+
+/* ==== Shared TTS helpers ==== */
+let VS=[], rate=0.85, pitch=1.0, vname='';
+function bindTts(){
+  const r=document.getElementById('ttsRate'), p=document.getElementById('ttsPitch'), v=document.getElementById('ttsVoice');
+  const keepR=localStorage.getItem('TTS_RATE'); if(keepR) r.value=keepR; rate=parseFloat(r.value); r.addEventListener('input',()=>{ localStorage.setItem('TTS_RATE', r.value); rate=parseFloat(r.value); });
+  const keepP=localStorage.getItem('TTS_PITCH'); if(keepP) p.value=keepP; pitch=parseFloat(p.value); p.addEventListener('input',()=>{ localStorage.setItem('TTS_PITCH', p.value); pitch=parseFloat(p.value); });
+  const keepV=localStorage.getItem('VOICE_NAME');
+  function populate(){
+    VS = speechSynthesis.getVoices();
+    v.innerHTML=''; const en=VS.filter(x=>x.lang && x.lang.toLowerCase().startsWith('en'));
+    en.forEach(x=>{ const o=document.createElement('option'); o.value=x.name; o.textContent=x.name+' ('+x.lang+')'; if(keepV && keepV===x.name) o.selected=true; v.appendChild(o); });
+    vname = v.value || keepV || '';
+  }
+  if('speechSynthesis' in window && speechSynthesis.onvoiceschanged!==undefined) speechSynthesis.onvoiceschanged = populate;
+  populate();
+  v.addEventListener('change',()=>{ localStorage.setItem('VOICE_NAME', v.value); vname=v.value; });
+}
+function speak(text){
+  if(!('speechSynthesis' in window)) return;
+  if(speechSynthesis.speaking) speechSynthesis.cancel();
+  const u=new SpeechSynthesisUtterance(text); const vv = VS.find(x=> vname ? x.name===vname : (x.lang && x.lang.startsWith('en-')));
+  if(vv) u.voice=vv; u.lang='en-US'; u.rate=rate; u.pitch=pitch; speechSynthesis.speak(u);
+}
+
+/* ==== Game state ==== */
+let data=[], i=0, PH='문장을 만들어 보세요.', target, bank, note, speakBtn, needFile, game, words=[], expectCount=0, expectAnswer='';
+
+function loadSession(){
+  try{ const raw=sessionStorage.getItem('SENTENCE_LIST_JSON'); if(!raw) return null; const arr=JSON.parse(raw); if(Array.isArray(arr)&&arr.length>0) return arr.map(s=>String(s)); }catch(e){}
+  return null;
+}
+function splitClean(s){ return s.replace(/[.,!]/g,'').trim().split(/\s+/).filter(Boolean); }
+function shuffle(a){ for(let j=a.length-1;j>0;j--){ const k=Math.floor(Math.random()*(j+1)); [a[j],a[k]]=[a[k],a[j]];} return a; }
+
+function init(){
+  target=document.getElementById('target'); bank=document.getElementById('bank'); note=document.getElementById('feedback');
+  speakBtn=document.getElementById('speakButton'); needFile=document.getElementById('needFile'); game=document.getElementById('game');
+  bindTts();
+  const arr=loadSession(); if(!arr){ needFile.style.display='block'; return; }
+  data=arr; game.style.display='block'; speakBtn.disabled=false;
+  loadQ();
+  document.getElementById('btnReset').onclick=resetChips;
+  document.getElementById('btnNext').onclick=nextQ;
+  speakBtn.onclick=()=>{ clickSfx(); speak(data[i]); note.style.display='block'; note.textContent='🔊 '+data[i]; };
+}
+
+function makeChip(w, parent){
+  const c=document.createElement('button'); c.className='chip'; c.textContent=w; c.type='button';
+  c.onclick=()=>{
+    clickSfx(); target.classList.remove('ok','bad'); note.style.display='none';
+    if(c.parentElement===bank){
+      if(target.textContent===PH) target.textContent='';
+      bank.removeChild(c); target.appendChild(c);
+    }else{
+      target.removeChild(c); bank.appendChild(c);
+      if(target.children.length===0) target.textContent=PH;
+    }
+    autoCheck();
+  };
+  parent.appendChild(c);
+}
+
+function buildFromWords(){
+  target.innerHTML=''; bank.innerHTML=''; note.style.display='none'; target.classList.remove('ok','bad');
+  target.textContent=PH;
+  shuffle([...words]).forEach(w=>makeChip(w, bank));
+}
+function loadQ(){
+  const s=data[i]; words = splitClean(s); expectCount=words.length; expectAnswer=words.join(' ');
+  buildFromWords();
+}
+function resetChips(){ buildFromWords(); }
+function nextQ(){ i=(i+1)%data.length; loadQ(); }
+
+function autoCheck(){
+  if(target.children.length!==expectCount) return;
+  const user=[...target.children].map(n=>n.textContent).join(' ');
+  if(user===expectAnswer){
+    target.classList.add('ok'); target.classList.remove('bad'); note.style.display='block'; note.textContent='🥳 정답! 멋져요!'; okSfx();
+  }else{
+    target.classList.add('bad'); target.classList.remove('ok'); note.style.display='block'; note.textContent='🤔 순서가 달라요. 다시 시도!'; badSfx();
+  }
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>

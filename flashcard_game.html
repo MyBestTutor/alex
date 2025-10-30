@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8"/>
+  <title>단어 학습 마스터 🍀</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root{
+      --mint:#ecfdf5; --mint2:#d1fae5; --mint3:#a7f3d0; --mint4:#6ee7b7;
+      --mint5:#34d399; --mint6:#10b981; --mint7:#059669; --ink:#064e3b;
+    }
+    body{
+      font-family:'Inter',system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;
+      min-height:100vh;margin:0;display:flex;align-items:center;justify-content:center;
+      background: radial-gradient(1200px 600px at -10% -10%, #f0fdf4, transparent 70%),
+                  radial-gradient(1200px 700px at 110% -10%, #dcfce7, transparent 70%),
+                  linear-gradient(180deg, #f0fdf4, #ecfeff);
+    }
+    .game-wrap{width:min(860px,96vw);background:#ffffffee;backdrop-filter:blur(8px);
+      border-radius:32px;box-shadow:0 24px 48px rgba(0,0,0,.1);
+      padding:22px 20px 28px;border:1px solid rgba(0,0,0,.06);}
+    /* ===== Brand (glassmorphism box with clover emoji + title) ===== */
+    .brand{display:flex;flex-direction:column;align-items:center;margin-bottom:8px;gap:10px;}
+    .glass-title{
+      display:flex;align-items:center;justify-content:center;gap:12px;
+      background:rgba(255,255,255,0.25); border-radius:20px; padding:16px 28px;
+      backdrop-filter:blur(10px); box-shadow:0 4px 16px rgba(0,0,0,0.15);
+      color:#065f46; font-weight:900; font-size:1.8rem;
+    }
+    .emoji{ font-size:2rem; }
+    /* ===== Toolbar & Buttons ===== */
+    .toolbar{ display:flex; justify-content:space-between; align-items:center; margin:10px 0 14px; flex-wrap:wrap; gap:8px;}
+    .chip{ font-weight:900; font-size:1rem; padding:8px 14px; border-radius:999px; color:white; background:var(--mint7); transition:.15s; box-shadow:0 6px 12px rgba(5,150,105,.3); text-decoration:none; }
+    .chip:hover{ transform:translateY(-1px);}
+    .mode-wrap{ background:#f0fdf4; border:1px solid #dcfce7; border-radius:20px; padding:12px; }
+    .mode-grid{
+      display:grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap:12px; align-items:stretch;
+    }
+    @media (min-width: 520px){ .mode-grid{ grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); } }
+    @media (min-width: 768px){ .mode-grid{ grid-template-columns: repeat(5, 1fr);} }
+    .btn{
+      padding:12px; border-radius:18px; color:#fff; font-weight:900; letter-spacing:.01em;
+      box-shadow:0 10px 18px rgba(0,0,0,.12); transition:.15s; border:none; cursor:pointer;
+      display:flex; align-items:center; justify-content:center; gap:8px; font-size:1rem;
+      background:linear-gradient(180deg, var(--mint6), var(--mint7));
+      height:52px; width:100%;
+    }
+    .btn:hover{ transform:translateY(-1px); box-shadow:0 12px 20px rgba(0,0,0,.15);}
+    .btn:active{ transform:translateY(0);}
+    .btn-ghost{ background:#e2e8f0; color:#0f172a; }
+    .mode-title{ text-align:center; font-weight:900; color:#059669; margin:6px 0 10px;}
+    .counter{ text-align:center; font-weight:900; color:#059669; margin-top:6px;}
+    .panel{ background:#fff; border:1px solid rgba(0,0,0,.06); border-radius:22px; padding:16px; box-shadow:0 12px 22px rgba(0,0,0,.08); margin-top:12px;}
+    .hidden{ display:none; }
+    .disabled{ opacity:.6; pointer-events:none; }
+    .hint{ text-align:center; color:#065f46; font-weight:800; min-height:28px;}
+    /* Flashcard */
+    .flashcard-box{ width:min(560px, 88vw); height:250px; margin:10px auto; perspective:1000px;}
+    .flashcard{ width:100%; height:100%; position:relative; transform-style:preserve-3d; transition:transform .6s; border-radius:24px; box-shadow:0 12px 24px rgba(0,0,0,.14); cursor:pointer; background:transparent;}
+    .flashcard.is-flipped{ transform:rotateY(180deg);}
+    .face{ position:absolute; inset:0; display:grid; place-items:center; font-weight:900; font-size:3rem; border-radius:24px; border:4px dashed var(--mint3); backface-visibility:hidden; }
+    .front{ background:var(--mint); color:var(--ink); z-index:2; }
+    .back{ background:#ecfccb; color:#365314; transform:rotateY(180deg); font-size:2.3rem; }
+    .nav-row{ display:flex; align-items:center; justify-content:center; gap:10px; margin-top:8px;}
+    .nav-btn{ background:linear-gradient(180deg, var(--mint5), var(--mint6)); color:white; font-weight:900; border:none; padding:10px 18px; border-radius:999px; box-shadow:0 8px 16px rgba(16,185,129,.35);}
+    /* Listen options */
+    .opt{ background:#e0f2fe; border:2px solid #93c5fd; border-radius:16px; padding:12px 14px; font-weight:900;}
+    .opt.correct{ background:#bbf7d0; border-color:#22c55e;}
+    .opt.wrong{ background:#fecaca; border-color:#ef4444;}
+    /* Spelling */
+    .slot{ display:inline-flex; align-items:center; justify-content:center; width:36px; height:48px; margin:0 3px; border-bottom:4px solid #10b981; font-size:2rem; font-weight:900;}
+    .key{ width:44px; height:44px; border-radius:12px; background:#fef9c3; border:2px solid #10b981; font-weight:900; margin:4px;}
+    /* Matching */
+    .grid-cards{ display:grid; grid-template-columns:repeat(4, 1fr); gap:10px;}
+    .mcard{ background:#fff7ed; border:2px solid #fdba74; border-radius:18px; height:88px; display:grid; place-items:center; font-weight:900; font-size:1.2rem; box-shadow:0 10px 18px rgba(0,0,0,.1); cursor:pointer; transition:.15s;}
+    .mcard.flipped{ background:#fffbeb; }
+    .mcard.matched{ background:#d1fae5; border-color:#34d399; color:#065f46; cursor:default;}
+    .mcard.wrong{ background:#fee2e2; border-color:#f87171; color:#991b1b;}
+    .mcard.selected{ box-shadow:0 12px 24px rgba(56,189,248,.35); outline:3px solid rgba(56,189,248,.25); transform:scale(1.03);}
+    /* Modal */
+    .modal{ position:fixed; inset:0; display:none; align-items:center; justify-content:center; background:rgba(255,255,255,.92); z-index:50;}
+    .modal .box{ background:#fff; border-radius:24px; padding:24px; width:min(480px, 92vw); text-align:center; box-shadow:0 22px 44px rgba(0,0,0,.12);}
+    .modal .btn-row{ display:flex; gap:10px; justify-content:center; margin-top:12px;}
+    /* Loader */
+    .loader{ display:flex; align-items:center; justify-content:center; gap:8px; color:#0f766e; font-weight:900; }
+    .loader .dot{ width:8px; height:8px; border-radius:50%; background:#10b981; animation: bounce 1s infinite alternate; }
+    .loader .dot:nth-child(2){ animation-delay:.15s } .loader .dot:nth-child(3){ animation-delay:.3s }
+    @keyframes bounce { to { transform: translateY(-6px) } }
+    /* Emoji burst */
+    .burst{ position:fixed; pointer-events:none; z-index:60; font-size:22px; animation: pop .8s ease-out forwards;}
+    @keyframes pop{ 0%{transform:translate(var(--x), var(--y)) scale(.6); opacity:1} 100%{transform:translate(calc(var(--x)*3), calc(var(--y)*3)) scale(1.2); opacity:0}}
+  </style>
+</head>
+<body>
+  <div class="game-wrap">
+    <!-- BRAND (glass title only) -->
+    <div class="brand">
+      <div class="glass-title">
+        <span class="emoji">🍀</span>
+        <span class="title-text">단어 학습 마스터</span>
+      </div>
+    </div>
+
+    <!-- TOOLBAR -->
+    <div class="toolbar">
+      <a href="index.html" class="chip">🏠 홈으로</a>
+      <div class="flex items-center gap-2">
+        <input id="fileInput" type="file" accept=".json,application/json" class="hidden"/>
+        <button id="loadBtn" class="btn">📂 단어 파일(.json) 불러오기</button>
+        <button id="clearBtn" class="btn btn-ghost">♻️ 초기화</button>
+      </div>
+    </div>
+
+    <!-- STATUS -->
+    <div id="modeTitle" class="mode-title">먼저 <strong>📂 단어 파일(.json) 불러오기</strong> 버튼을 눌러주세요</div>
+    <div id="statusBar" class="loader" style="display:none;"><div class="dot"></div><div class="dot"></div><div class="dot"></div> 불러오는 중...</div>
+
+    <!-- MODES -->
+    <div id="modes" class="mode-wrap disabled">
+      <div class="mode-grid">
+        <button class="btn" onclick="setMode('study')">✨ 학습</button>
+        <button class="btn" onclick="setMode('quiz')">⏱️ 퀴즈</button>
+        <button class="btn" onclick="setMode('listen')">👂 듣고 찾기</button>
+        <button class="btn" onclick="setMode('spelling')">✍️ 철자</button>
+        <button class="btn" onclick="setMode('match')">🧩 매칭</button>
+      </div>
+    </div>
+
+    <!-- Flashcard / Quiz -->
+    <div id="flashcardUiContainer" class="panel hidden">
+      <div class="flashcard-box">
+        <div id="flashcard" class="flashcard">
+          <div id="cardFront" class="face front"></div>
+          <div id="cardBack" class="face back"></div>
+        </div>
+      </div>
+      <div class="nav-row">
+        <button id="prevBtn" class="nav-btn" onclick="prevCard()">◀️ 이전</button>
+        <div id="cardCounter" class="counter"></div>
+        <button id="nextBtn" class="nav-btn" onclick="nextCard()">다음 ▶️</button>
+      </div>
+      <div id="countdownDisplay" class="hint"></div>
+    </div>
+
+    <!-- Listen -->
+    <div id="listenGameContainer" class="panel hidden">
+      <div class="flex flex-col items-center gap-2 mb-2">
+        <button id="listenAudioBtn" class="btn" onclick="playCurrentListenWord()">🔊 단어 듣기</button>
+        <div id="listenCounter" class="counter"></div>
+      </div>
+      <div id="listenOptions" class="flex flex-col gap-2"></div>
+      <div id="listenMessage" class="hint"></div>
+    </div>
+
+    <!-- Spelling -->
+    <div id="spellingGameContainer" class="panel hidden">
+      <div class="flex flex-col items-center gap-2 mb-2">
+        <button id="spellingAudioBtn" class="btn" onclick="playCurrentSpellingWord()">🔊 단어 듣기</button>
+      </div>
+      <div id="spellingHint" class="hint"></div>
+      <div id="spellingSlots" class="text-center mb-3"></div>
+      <div id="spellingKeyboard" class="flex flex-wrap justify-center"></div>
+      <div id="spellingMessage" class="hint"></div>
+      <div id="spellingCounter" class="counter"></div>
+    </div>
+
+    <!-- Matching -->
+    <div id="matchGameContainer" class="panel hidden">
+      <div id="matchGrid" class="grid-cards"></div>
+      <div id="matchMessage" class="hint"></div>
+    </div>
+
+    <!-- Modal -->
+    <div id="successModal" class="modal">
+      <div class="box" id="modalBox"></div>
+    </div>
+  </div>
+
+<script>
+/* ===================== State ===================== */
+let flashcardData = [];
+let currentCardIndex = 0;
+let flipTimer, countdownInterval;
+let isQuizMode = false;
+const FLIP_DELAY = 3000;
+
+/* Wrong pools for retry */
+let listenWrong = new Set();
+let spellingWrong = new Set();
+
+/* ===================== Audio & FX ===================== */
+let audioCtx=null;
+function initAudio(){ try{
+  if(!audioCtx) audioCtx = new (window.AudioContext||window.webkitAudioContext)();
+  if(audioCtx.state==='suspended') audioCtx.resume();
+  const b=audioCtx.createBuffer(1,1,22050); const s=audioCtx.createBufferSource(); s.buffer=b; s.connect(audioCtx.destination); s.start(0);
+}catch(e){}}
+['pointerdown','keydown','touchstart'].forEach(ev => window.addEventListener(ev, ()=>{ initAudio(); }, {once:true, passive:true}));
+function playTick(){ if(!audioCtx) return; const o=audioCtx.createOscillator(), g=audioCtx.createGain(); o.type='sine'; o.frequency.value=720;
+  g.gain.setValueAtTime(0, audioCtx.currentTime); g.gain.linearRampToValueAtTime(0.22, audioCtx.currentTime+.01); g.gain.exponentialRampToValueAtTime(.0001, audioCtx.currentTime+.12);
+  o.connect(g).connect(audioCtx.destination); o.start(); o.stop(audioCtx.currentTime+.13); }
+function playDing(){ if(!audioCtx) return; const a=audioCtx.createOscillator(), b=audioCtx.createOscillator(), g=audioCtx.createGain();
+  a.type='sine'; a.frequency.value=880; b.type='sine'; b.frequency.value=1320;
+  g.gain.setValueAtTime(0, audioCtx.currentTime); g.gain.linearRampToValueAtTime(.25, audioCtx.currentTime+.01); g.gain.exponentialRampToValueAtTime(.0001, audioCtx.currentTime+.35);
+  a.connect(g); b.connect(g); g.connect(audioCtx.destination); a.start(); b.start(); a.stop(audioCtx.currentTime+.36); b.stop(audioCtx.currentTime+.36); }
+function speak(text){ if('speechSynthesis' in window){ const u=new SpeechSynthesisUtterance(text); u.lang='en-US'; speechSynthesis.speak(u);} }
+function burst(x,y){ const em=['🌿','🍀','✨','🌟','🥳','🍃']; for(let i=0;i<6;i++){ const el=document.createElement('div'); el.className='burst'; el.textContent=em[i%em.length];
+  const dx=(Math.random()*2-1)*40, dy=(Math.random()*2-1)*40; el.style.left=x+'px'; el.style.top=y+'px'; el.style.setProperty('--x',dx+'px'); el.style.setProperty('--y',dy+'px');
+  document.body.appendChild(el); setTimeout(()=>el.remove(),900);}}
+
+/* ===================== UI Refs ===================== */
+const modeTitle = document.getElementById('modeTitle');
+const statusBar = document.getElementById('statusBar');
+const modes = document.getElementById('modes');
+const flashcardUiContainer = document.getElementById('flashcardUiContainer');
+const listenGameContainer = document.getElementById('listenGameContainer');
+const spellingGameContainer = document.getElementById('spellingGameContainer');
+const matchGameContainer = document.getElementById('matchGameContainer');
+const successModal = document.getElementById('successModal');
+const modalBox = document.getElementById('modalBox');
+const flashcard = document.getElementById('flashcard');
+const cardFront = document.getElementById('cardFront'); const cardBack = document.getElementById('cardBack');
+const cardCounter = document.getElementById('cardCounter'); const prevBtn = document.getElementById('prevBtn'); const nextBtn = document.getElementById('nextBtn');
+const countdownDisplay = document.getElementById('countdownDisplay');
+
+/* ===================== Loader Button (.json any name) ===================== */
+const fileInput = document.getElementById('fileInput');
+const loadBtn = document.getElementById('loadBtn');
+const clearBtn = document.getElementById('clearBtn');
+
+loadBtn.onclick = ()=> fileInput.click();
+fileInput.onchange = async (ev)=>{
+  const f = ev.target.files && ev.target.files[0]; if(!f) return;
+  statusBar.style.display='flex';
+  try{
+    const text = await f.text();
+    const data = JSON.parse(text);
+    if(!Array.isArray(data)) throw new Error('JSON 루트가 배열이어야 합니다.');
+    const ok = data.filter(d => d && typeof d.front==='string' && typeof d.back==='string');
+    if(ok.length===0) throw new Error('유효한 항목이 없습니다.');
+    flashcardData = ok;
+    listenWrong.clear(); spellingWrong.clear();
+    modeTitle.innerHTML = `단어 <strong>${flashcardData.length}</strong>개 로드됨 — 모드를 선택하세요`;
+    modes.classList.remove('disabled');
+    hideAll();
+    setMode('study');
+  }catch(err){
+    alert('JSON 읽기 오류: ' + err.message);
+  }finally{
+    statusBar.style.display='none';
+    fileInput.value='';
+  }
+};
+
+clearBtn.onclick = ()=>{
+  flashcardData = []; listenWrong.clear(); spellingWrong.clear();
+  modes.classList.add('disabled');
+  modeTitle.textContent = '먼저 📂 단어 파일(.json) 불러오기 버튼을 눌러주세요';
+  hideAll();
+};
+
+/* ===================== Helpers & Mode Switch ===================== */
+function shuffleArray(arr){ const a=[...arr]; for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+function sampleArray(arr, n){ return shuffleArray(arr).slice(0, n); }
+function hideAll(){ clearTimeout(flipTimer); clearInterval(countdownInterval);
+  [flashcardUiContainer, listenGameContainer, spellingGameContainer, matchGameContainer].forEach(el=>el.classList.add('hidden'));
+  successModal.style.display='none'; isQuizMode=false; try{ speechSynthesis.cancel(); }catch(e){} }
+function ensureDataReady(){ if(!flashcardData || flashcardData.length===0){ alert('먼저 단어 파일을 불러와 주세요 (.json).'); return false;} return true; }
+function setMode(m){
+  if(!ensureDataReady()) return; hideAll();
+  if(m==='study'){ flashcardUiContainer.classList.remove('hidden'); currentCardIndex=0; loadCard(false); }
+  else if(m==='quiz'){ flashcardUiContainer.classList.remove('hidden'); isQuizMode=true; currentCardIndex=0; loadCard(true); }
+  else if(m==='listen'){ listenGameContainer.classList.remove('hidden'); startListenGame(); }
+  else if(m==='spelling'){ spellingGameContainer.classList.remove('hidden'); startSpellingGame(); }
+  else if(m==='match'){ matchGameContainer.classList.remove('hidden'); startMatchGame(); }
+}
+
+/* ===================== Flashcard / Quiz ===================== */
+function loadCard(quiz=false){
+  const c = flashcardData[currentCardIndex];
+  flashcard.classList.remove('is-flipped');
+  cardFront.textContent = c.back;  // EN
+  cardBack.textContent  = c.front; // KR
+  cardCounter.textContent = `${currentCardIndex+1} / ${flashcardData.length}`;
+  countdownDisplay.textContent = quiz ? '카운트다운이 시작돼요…' : '카드를 탭하여 뒤집어 보세요.';
+  modeTitle.textContent = quiz ? '⏱️ 퀴즈: 영어 → (뒤집힘) 한글' : '✨ 학습: 영어 카드 클릭 시 뒤집힘';
+  if(quiz){
+    prevBtn.disabled = true; nextBtn.disabled = true;
+    let count = FLIP_DELAY/1000; countdownDisplay.textContent = `${count} 초 후 뒤집힙니다…`; playTick();
+    countdownInterval = setInterval(()=>{
+      count--;
+      if(count>0){ countdownDisplay.textContent = `${count} 초 후 뒤집힙니다…`; playTick(); }
+      else { clearInterval(countdownInterval); countdownDisplay.textContent = '뜻 확인! (다음 카드까지 2초)'; }
+    },1000);
+    flipTimer = setTimeout(()=>{
+      flashcard.classList.add('is-flipped'); playDing();
+      flipTimer = setTimeout(()=>advance('next'), 2000);
+    }, FLIP_DELAY);
+    flashcard.onclick = null;
+  }else{
+    prevBtn.disabled = false; nextBtn.disabled = false;
+    flashcard.onclick = ()=>{ flashcard.classList.toggle('is-flipped'); speak(c.back); };
+  }
+}
+function advance(dir){
+  currentCardIndex = (dir==='next')
+    ? (currentCardIndex+1)%flashcardData.length
+    : (currentCardIndex-1+flashcardData.length)%flashcardData.length;
+  loadCard(isQuizMode);
+}
+function nextCard(){ if(!isQuizMode){ flashcard.classList.remove('is-flipped'); setTimeout(()=>advance('next'), 60); } }
+function prevCard(){ if(!isQuizMode){ flashcard.classList.remove('is-flipped'); setTimeout(()=>advance('prev'), 60); } }
+
+/* ===================== Listen (with retry wrong) ===================== */
+let listenSet=[], listenIdx=0, listenAnswer='';
+function startListenGame(custom){
+  modeTitle.textContent = '👂 듣고 찾기: 들리는 단어의 뜻을 고르세요!';
+  const base = Array.isArray(custom) && custom.length>0 ? custom : flashcardData;
+  listenSet = shuffleArray(base); listenIdx = 0; listenWrong.clear(); loadListenQ();
+}
+function loadListenQ(){
+  if(listenIdx>=listenSet.length){
+    const wrongArr = Array.from(listenWrong);
+    const againAll = ()=>startListenGame();
+    const againWrong = ()=>startListenGame(wrongArr);
+    showEndModal('듣고 찾기 완료 🥳', summaryText(listenSet.length, wrongArr.length), againAll, wrongArr.length>0 ? againWrong : null);
+    return;
+  }
+  const item = listenSet[listenIdx]; listenAnswer = item.front;
+  document.getElementById('listenCounter').textContent = `${listenIdx+1} / ${listenSet.length}`;
+  const opts = shuffleArray([item.front, ...sampleArray(flashcardData.filter(x=>x.front!==item.front).map(x=>x.front),3)]);
+  const box = document.getElementById('listenOptions'); box.innerHTML='';
+  opts.forEach(o=>{
+    const b=document.createElement('button'); b.className='opt'; b.textContent=o;
+    b.onclick=ev=>{
+      [...box.children].forEach(x=>x.disabled=true);
+      if(o===listenAnswer){
+        b.classList.add('correct'); document.getElementById('listenMessage').textContent='정답!'; playDing(); burst(ev.clientX, ev.clientY);
+      }else{
+        listenWrong.add(item);
+        b.classList.add('wrong'); [...box.children].forEach(x=>{ if(x.textContent===listenAnswer) x.classList.add('correct'); });
+        document.getElementById('listenMessage').textContent='오답!';
+      }
+      setTimeout(()=>{ listenIdx++; document.getElementById('listenMessage').textContent=''; loadListenQ(); },1300);
+    };
+    box.appendChild(b);
+  });
+  speak(item.back);
+}
+function playCurrentListenWord(){ speak(listenSet[listenIdx].back); }
+
+/* ===================== Spelling (with retry wrong, support repeated letters) ===================== */
+let spellSet=[], spellIdx=0, target='', guess='';
+function startSpellingGame(custom){
+  modeTitle.textContent='✍️ 철자 맞추기: 알파벳을 골라 단어를 완성하세요!';
+  const base = Array.isArray(custom) && custom.length>0 ? custom : flashcardData.filter(x=>x.back.length>=3);
+  spellSet = shuffleArray(base); spellIdx=0; spellingWrong.clear(); loadSpellQ();
+}
+function loadSpellQ(){
+  if(spellIdx>=spellSet.length){
+    const wrongArr = Array.from(spellingWrong);
+    const againAll = ()=>startSpellingGame();
+    const againWrong = ()=>startSpellingGame(wrongArr);
+    showEndModal('철자 맞추기 완료 🎉', summaryText(spellSet.length, wrongArr.length), againAll, wrongArr.length>0 ? againWrong : null);
+    return;
+  }
+  const item=spellSet[spellIdx]; target=item.back.toUpperCase(); guess='';
+  document.getElementById('spellingHint').textContent=`힌트: "${item.front}"`;
+  renderSlots(); renderKeys(item); speak(item.back);
+  document.getElementById('spellingCounter').textContent=`${spellIdx+1} / ${spellSet.length}`;
+}
+function countMap(str){ const m={}; for(const ch of str){ m[ch]=(m[ch]||0)+1; } return m; }
+function renderSlots(){
+  const cont=document.getElementById('spellingSlots'); cont.innerHTML='';
+  for(let i=0;i<target.length;i++){ const s=document.createElement('span'); s.className='slot'; s.textContent=guess[i]||''; cont.appendChild(s); }
+}
+function renderKeys(currentItem){
+  const cont=document.getElementById('spellingKeyboard'); cont.innerHTML='';
+  const targetCounts = countMap(target); const usedCounts = countMap(guess);
+  const remainingLetters = []; Object.keys(targetCounts).forEach(ch=>{ const remain=Math.max(0, targetCounts[ch]-(usedCounts[ch]||0)); for(let i=0;i<remain;i++) remainingLetters.push(ch); });
+  const alphabet='ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split(''); const distractPool=alphabet.filter(ch=>!targetCounts[ch]); const distractors=sampleArray(distractPool, Math.min(3, distractPool.length));
+  const pool = shuffleArray(remainingLetters.concat(distractors));
+  pool.forEach(ch=>{
+    const b=document.createElement('button'); b.className='key'; b.textContent=ch;
+    b.onclick=ev=>{
+      if(guess.length>=target.length) return;
+      guess+=ch; renderSlots(); renderKeys(currentItem);
+      if(guess.length===target.length){
+        const ok=(guess===target);
+        document.getElementById('spellingMessage').textContent = ok ? '정답!' : '오답! 다시 시도';
+        if(!ok){ spellingWrong.add(currentItem); } else { playDing(); burst(ev.clientX, ev.clientY); }
+        setTimeout(()=>{ if(ok){ spellIdx++; } document.getElementById('spellingMessage').textContent=''; loadSpellQ(); }, 1100);
+      }
+    };
+    cont.appendChild(b);
+  });
+  const back=document.createElement('button'); back.className='key'; back.style.background='#fecaca'; back.textContent='⌫';
+  back.onclick=()=>{ if(guess.length>0){ guess=guess.slice(0,-1); renderSlots(); renderKeys(currentItem); } }; cont.appendChild(back);
+}
+function playCurrentSpellingWord(){ speak(spellSet[spellIdx].back); }
+
+/* ===================== Matching — 12 cards (6 pairs) with 3s preview ===================== */
+let matchFlipped=[], matchFound=0, matchLock=false;
+function startMatchGame(){
+  modeTitle.textContent = '🧩 카드 매칭: 3초 미리보기 후 시작 (6쌍)';
+  const picked = sampleArray(flashcardData, Math.min(6, flashcardData.length));
+  const cards = []; picked.forEach(it=>{ cards.push({text:it.back, pair:it.front}); cards.push({text:it.front, pair:it.back}); });
+  renderMatchCards(shuffleArray(cards));
+  matchLock=true; matchFound=0; matchFlipped=[]; const all=[...document.querySelectorAll('.mcard')];
+  all.forEach(c=>{ c.classList.add('flipped'); c.textContent=c.getAttribute('data-text'); });
+  document.getElementById('matchMessage').textContent = '👀 3초간 기억해보세요…';
+  setTimeout(()=>{ all.forEach(c=>{ c.classList.remove('flipped','selected','wrong'); c.textContent='?'; });
+    matchLock=false; document.getElementById('matchMessage').textContent = '두 장씩 뒤집어 짝을 찾아보세요!'; }, 3000);
+}
+function renderMatchCards(cards){
+  const g=document.getElementById('matchGrid'); g.innerHTML='';
+  cards.forEach(d=>{
+    const el=document.createElement('div');
+    el.className='mcard'; el.textContent='?';
+    el.setAttribute('data-text', d.text); el.setAttribute('data-pair', d.pair);
+    el.onclick=ev=>onMatchClick(el, ev);
+    g.appendChild(el);
+  });
+}
+function onMatchClick(card, ev){
+  if(matchLock || card.classList.contains('flipped') || card.classList.contains('matched')) return;
+  card.classList.add('flipped','selected'); card.textContent = card.getAttribute('data-text');
+  matchFlipped.push(card);
+  if(matchFlipped.length===1){ document.getElementById('matchMessage').textContent='다른 카드를 골라보세요!'; return; }
+  if(matchFlipped.length===2){
+    matchLock=true;
+    const [a,b]=matchFlipped;
+    if(a.getAttribute('data-pair')===b.getAttribute('data-text')){
+      a.classList.remove('selected'); b.classList.remove('selected');
+      a.classList.add('matched'); b.classList.add('matched');
+      matchFound++; matchFlipped=[]; matchLock=false;
+      document.getElementById('matchMessage').textContent='정답! 계속해요 🎉';
+      playDing(); burst(ev.clientX, ev.clientY);
+      if(matchFound===6){
+        showEndModal('매칭 성공 🥳','모든 짝을 맞췄어요!', ()=>startMatchGame(), null);
+      }
+    }else{
+      a.classList.add('wrong'); b.classList.add('wrong');
+      document.getElementById('matchMessage').textContent='오답! 다시 시도해요';
+      setTimeout(()=>{
+        a.classList.remove('flipped','wrong','selected'); b.classList.remove('flipped','wrong','selected');
+        a.textContent='?'; b.textContent='?'; matchFlipped=[]; matchLock=false;
+      }, 900);
+    }
+  }
+}
+
+/* ===================== Modal Helpers ===================== */
+function showEndModal(title, subtitle, onAgainAll, onAgainWrong){
+  const wrongBtn = onAgainWrong ? `<button class="btn" id="againWrongBtn">🔁 오답만 다시</button>` : "";
+  modalBox.innerHTML = `<div class="text-3xl font-black text-emerald-500 mb-2">${title}</div>
+    <div class="text-emerald-600 font-bold">${subtitle}</div>
+    <div class="btn-row">
+      <button class="btn" id="againAllBtn">↻ 전체 다시</button>
+      ${wrongBtn}
+      <button class="btn btn-ghost" id="closeBtn">닫기</button>
+    </div>`;
+  successModal.style.display='flex';
+  document.getElementById('againAllBtn').onclick=()=>{ closeModal(); onAgainAll(); };
+  if(onAgainWrong){ document.getElementById('againWrongBtn').onclick=()=>{ closeModal(); onAgainWrong(); }; }
+  document.getElementById('closeBtn').onclick=closeModal;
+}
+function closeModal(){ successModal.style.display='none'; }
+function summaryText(total, wrong){ return `총 ${total}문제 · 오답 ${wrong}문제`; }
+</script>
+</body>
+</html>
