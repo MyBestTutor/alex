@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>서윤이 공부 플래너</title>
+<style>
+:root{ --bg:#ffffff; --card:#ffffff; --ink:#0f172a; --muted:#64748b; --brand:#5c7cfa; --ok:#72d6b1; --warn:#f7c87b; --danger:#ff8f7a; --border:#e6e9ef; --shadow:0 6px 18px rgba(15,23,42,.06); --radius:16px; }
+*{box-sizing:border-box}
+html,body{margin:0; padding:0; color:var(--ink); background:var(--bg); font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans KR","Apple SD Gothic Neo","Malgun Gothic",Arial;}
+.header{position:sticky; top:0; z-index:20; background:rgba(255,255,255,.96); border-bottom:1px solid var(--border); backdrop-filter:saturate(180%) blur(6px)}
+.container{max-width:1100px; margin:0 auto; padding:12px}
+.h1{display:flex; gap:8px; align-items:center}
+h1{margin:0; font-size:20px; letter-spacing:-.2px}
+.sub{color:#475569; font-weight:800; font-size:12px}
+.row{display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-top:4px}
+.btn{border:1px solid var(--border); background:#f7f8fd; color:#0f172a; padding:8px 12px; border-radius:12px; font-weight:800; cursor:pointer; box-shadow:var(--shadow)}
+.btn.primary{background:var(--brand); color:#fff; border-color:transparent}
+.btn.success{background:var(--ok); color:#0f172a; border-color:transparent}
+.btn.warn{background:var(--warn); color:#0f172a; border-color:transparent}
+.btn.danger{background:var(--danger); color:#fff; border-color:transparent}
+.badge{background:#eef2ff; border:1px solid var(--border); padding:6px 10px; border-radius:999px; font-size:12px}
+.tabs{display:flex; gap:6px; margin-left:auto}
+.tab{padding:8px 12px; border-radius:999px; background:#f6f7fb; border:1px solid var(--border); color:#0f172a; font-weight:800; cursor:pointer; user-select:none}
+.tab.active{background:var(--brand); color:#fff; border-color:transparent}
+.hidden{display:none !important}
+.card{background:var(--card); border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow); overflow:visible}
+.card .title{display:flex; justify-content:space-between; align-items:center; padding:10px 12px; border-bottom:1px solid var(--border); font-weight:900}
+.card .body{padding:10px 12px}
+.small{font-size:12px; color:var(--muted); font-variant-numeric: tabular-nums;}
+.tiny{font-size:11px; color:#64748b}
+.board{display:grid; grid-template-columns: 1.1fr 1fr; gap:12px; margin-top:12px}
+@media (max-width: 1000px){ .board{grid-template-columns: 1fr} }
+.board .col{display:flex; flex-direction:column; gap:12px}
+.kbar{height:10px; background:#e8eefc; border-radius:999px; overflow:hidden}
+.kbar>span{display:block; height:100%; background:var(--brand)}
+.tcard{padding:8px; border:1px solid var(--border); border-radius:12px; background:#fff}
+.thead{display:flex; gap:6px; align-items:center; font-weight:900; font-size:13px}
+.info{font-size:12px; color:#64748b; margin-top:4px; font-variant-numeric: tabular-nums;}
+.badge-chip{display:inline-flex; align-items:center; gap:6px; padding:6px 8px; border-radius:999px; border:1px solid var(--border); background:#fff; font-size:12px}
+.tag{display:flex; align-items:center; gap:6px; padding:8px 10px; border-radius:10px; border:1px solid var(--border); background:#fff; font-size:13px; white-space:nowrap}
+.tag input[type="checkbox"]{transform:scale(1.1)}
+.tag.done{background:#e8ffe8; border-color:#baf7c0}
+.minibar{height:8px; border-radius:999px; background:#e5e7eb; overflow:hidden; margin-top:4px}
+.minibar>span{display:block; height:100%; background:linear-gradient(90deg, var(--brand), var(--ok))}
+.table{width:100%; border-collapse:collapse}
+.table th,.table td{border:1px solid var(--border); padding:8px; text-align:center; font-size:13px; vertical-align:top}
+.table th{background:#f6f7fb}
+.left{text-align:left}
+.grid{display:grid; gap:10px}
+.grid-2{grid-template-columns:1fr 1fr}
+.daybtn{display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border:1px solid var(--border); border-radius:999px; cursor:pointer; user-select:none; background:#fff}
+.daybtn.on{background:#eef2ff; border-color:#c7d2fe}
+.daybtn:focus{outline:2px solid #c7d2fe; outline-offset:2px}
+
+@media print{
+  body *{ visibility:hidden !important; }
+  #print-sheet, #print-sheet *{ visibility:visible !important; }
+  #print-sheet{ position:absolute; left:0; top:0; width:100%; }
+}
+
+</style>
+</head>
+<body>
+  <div class="header">
+    <div class="container">
+      <div class="row">
+        <div class="h1">
+          <h1>서윤이 공부 플래너</h1>
+          <span class="sub">오늘도 반짝반짝 🌟</span>
+        </div>
+        <span class="badge">이번 주: <span id="week-range"></span></span>
+        <div class="tabs">
+          <div class="tab active" data-action="tab:dashboard" tabindex="0">대시보드</div>
+          <div class="tab" data-action="tab:routine" tabindex="0">설정</div>
+        </div>
+        <button class="btn primary" data-action="export">내보내기</button>
+        <label class="btn success" for="import-file">불러오기</label>
+        <input type="file" id="import-file" accept="application/json" style="display:none">
+      </div>
+    </div>
+  </div>
+
+  <section id="view-dashboard">
+    <div class="container">
+      <div class="board">
+        <div class="col">
+          <div class="card">
+            <div class="title">오늘 할 일 <button class="btn" id="btn-print-today" style="margin-left:auto">오늘 할 일 인쇄</button></div>
+            <div class="body" id="today-list"><div class="tiny">오늘로 배정된 항목이 여기에 표시됩니다.</div></div>
+          </div>
+          <div class="card">
+            <div class="title">밀린 할 일 (이번 주)</div>
+            <div class="body" id="backlog-list"><div class="tiny">이번 주에 아직 완료하지 않은 항목이 여기에 표시됩니다. (해피데이는 제외)</div></div>
+          </div>
+        </div>
+        <div class="col">
+          <div class="card">
+            <div class="title">이번 주 한 일 합계</div>
+            <div class="body" id="weekly-summary">
+              <div class="kbar"><span id="weekly-bar" style="width:0%"></span></div>
+              <div class="small" id="weekly-text" style="margin-top:6px">배정 0 · 완료 0</div>
+              <div id="weekly-list" style="margin-top:8px" class="grid grid-2"></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="title">스티커 & 해피데이</div>
+            <div class="body">
+              <div class="small">보유 스티커: <strong id="sticker-count">0</strong>개 · 보유 쿠폰: <strong id="coupon-count">0</strong>장</div>
+              <div class="row" style="margin-top:6px">
+                <button class="btn" id="btn-convert-coupon">스티커 → 쿠폰 전환 (50개)</button>
+              </div>
+              <div class="row" style="margin-top:6px">
+                <input type="date" id="coupon-date" class="select" style="padding:8px 10px;border:1px solid var(--border);border-radius:10px">
+                <button class="btn warn" id="btn-use-coupon">해피데이 쿠폰 적용</button>
+                <div class="tiny" id="coupon-help">* 전환: 스티커 50개 → 쿠폰 1장. 적용: 보유 쿠폰 1장을 사용해 <strong>선택한 날짜</strong>를 해피데이로 지정.</div>
+              </div>
+              <div class="tiny" id="coupon-status" style="margin-top:6px"></div>
+            
+      <div class="card" style="margin-top:10px">
+        <div class="title">클라우드 동기화 (GitHub Gist)</div>
+        <div class="body">
+          <div class="tiny" style="margin-bottom:8px">
+            * 깃허브 <strong>Personal Access Token</strong>(gist 권한 필요)과 <strong>Gist ID</strong>를 저장해두면, 기기 간에 데이터를 동기화할 수 있어요.
+          </div>
+          <div class="grid grid-2">
+            <input id="gist-token" class="select" placeholder="GitHub Token (gist 권한)" />
+            <input id="gist-id" class="select" placeholder="Gist ID (처음 저장 시 자동 생성)" />
+          </div>
+          <div class="row" style="margin-top:8px">
+            <button class="btn primary" id="btn-gist-save">Gist에 저장</button>
+            <button class="btn" id="btn-gist-load">Gist에서 불러오기</button>
+          </div>
+          <div class="tiny" id="gist-status" style="margin-top:6px;color:#334155"></div>
+          <div class="tiny" style="margin-top:6px;color:#64748b">
+            · 토큰/ID는 이 브라우저의 <code>localStorage</code>에만 저장됩니다. (다른 기기엔 공유되지 않음)<br/>
+            · 공개 데이터가 걱정된다면 Gist를 <strong>secret</strong>으로 생성하세요.
+          </div>
+        </div>
+      </div>
+
+</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="view-routine" class="hidden">
+    <div class="container">
+      <div class="card">
+        <div class="title">과제 목록</div>
+        <div class="body">
+          <table class="table" id="routine-task-table">
+            <thead><tr><th>과목</th><th class="left">제목</th><th>단위 분</th><th></th></tr></thead>
+            <tbody></tbody>
+          </table>
+          <div class="row" style="margin-top:6px">
+            <input class="select" id="r-new-subj" placeholder="과목 (예: 영어)">
+            <input class="select" id="r-new-title" placeholder="제목 (예: 단어 20개)">
+            <input class="select" id="r-new-min" type="number" min="5" step="5" placeholder="분" style="width:120px">
+            <button class="btn primary" id="r-btn-task-add">추가</button>
+          </div>
+        </div>
+      </div>
+      <div class="card" style="margin-top:10px">
+        <div class="title">요일별 배정 (on/off)</div>
+        <div class="body">
+          <table class="table" id="routine-plan-table">
+            <thead>
+              <tr><th class="left">과제</th><th>월</th><th>화</th><th>수</th><th>목</th><th>금</th><th>토</th><th>일</th><th>주간 합계</th></tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card" style="margin-top:10px">
+        <div class="title">데이터</div>
+        <div class="body">
+          <div class="row">
+            <button class="btn" id="btn-reset-week">이번 주 완료 기록 지우기</button>
+            <button class="btn danger" id="btn-reset-all">모든 데이터 초기화</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+<script>
+/* ===== Storage & Utils ===== */
+const Store={ get(k){try{return localStorage.getItem(k)}catch(e){return null}}, set(k,v){try{localStorage.setItem(k,v)}catch(e){} } };
+const SAVE_KEY="midplanner:elem:v1";
+// ★ 호환 로딩용 키 목록 (midplanner의 예전 키들도 포함) 
+const COMPAT_KEYS=[
+  "midplanner:elem:v1",
+  "midplanner:v6h","midplanner:v6e","midplanner:v6d",
+  "midplanner:v6c","midplanner:v6b","midplanner:v6a","midplanner:v6"
+];
+
+const pad=n=>n<10?`0${n}`:`${n}`;
+const fmtDate=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+function getISOWeek(d){ const date=new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate())); const dayNum=date.getUTCDay()||7; date.setUTCDate(date.getUTCDate()+4-dayNum); const yearStart=new Date(Date.UTC(date.getUTCFullYear(),0,1)); const weekNo=Math.ceil((((date-yearStart)/86400000)+1)/7); return [date.getUTCFullYear(), weekNo]; }
+function weekStartEnd(isoYear, isoWeek){ const simple=new Date(Date.UTC(isoYear,0,4)); const dayOfWeek=simple.getUTCDay()||7; const monday=new Date(simple); monday.setUTCDate(simple.getUTCDate()-dayOfWeek+1+(isoWeek-1)*7); const sunday=new Date(monday); sunday.setUTCDate(monday.getUTCDate()+6); return [monday, sunday]; }
+const uid=()=>Math.random().toString(36).slice(2,10);
+const dateToKDay=ds=>["일","월","화","수","목","금","토"][new Date(ds+"T00:00:00").getDay()];
+function parseLocalDate(ds){ const [y,m,d]=ds.split('-').map(Number); return new Date(y,(m||1)-1,(d||1),0,0,0,0); }
+function isBetweenDates(ds,start,end){ try{ const t=parseLocalDate(ds).getTime(); const s=new Date(start.getFullYear(),start.getMonth(),start.getDate()).getTime(); const e=new Date(end.getFullYear(),end.getMonth(),end.getDate()).getTime(); return t>=s&&t<=e; }catch(_){ return false; } }
+
+/* ===== State ===== */
+let state={ routine:null, stickers:0, coupons:0, awardedDates:{}, happyDays:{} };
+
+/* ===== Init ===== */
+document.addEventListener('DOMContentLoaded',()=>{
+  const [y,w]=getISOWeek(new Date()); const [ws,we]=weekStartEnd(y,w);
+  document.getElementById('week-range').textContent=`${fmtDate(new Date(ws))} ~ ${fmtDate(new Date(we))}`;
+  load(); if(!state.routine) seedRoutine(); ensureGamify();
+  // tab handlers (click + keyboard)
+  document.querySelectorAll('.tab').forEach(tab=>{
+    tab.addEventListener('click',()=>{ const act=tab.dataset.action; if(act?.startsWith('tab:')) setTab(act.split(':')[1]); });
+    tab.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); tab.click(); }});
+  });
+  // export
+  document.body.addEventListener('click',e=>{ const a=e.target.closest('[data-action="export"]'); if(!a) return; const out=JSON.stringify(state,null,2); const link=document.createElement('a'); link.href=URL.createObjectURL(new Blob([out],{type:'application/json'})); link.download=`elem_planner_${new Date().toISOString().slice(0,10)}.json`; link.click(); });
+  // import
+  const input=document.getElementById('import-file');
+  input.addEventListener('change',e=>{ if(!e.target.files?.length) return; const reader=new FileReader(); reader.onload=()=>{ try{ const obj=JSON.parse(reader.result); if(isKidLayout(obj)){ applyKidLayout(obj); alert('사용자 레이아웃을 불러왔어요.'); } else { state=obj; alert('일반 저장 데이터로 불러왔어요.'); } save(); renderAll(); renderRoutine(); }catch(err){ alert('불러오기 실패: '+err.message);} }; reader.readAsText(e.target.files[0]); });
+  setTab('dashboard'); renderAll();
+});
+
+/* ===== Persistence (UPDATED for multi-key compatibility) ===== */
+function load(){
+  // 여러 호환 키를 순차적으로 검사해서, 가장 먼저 성공적으로 파싱되는 데이터를 사용
+  for(const k of COMPAT_KEYS){
+    const raw = Store.get(k);
+    if(!raw) continue;
+    try{
+      state = JSON.parse(raw);
+      // console.log('[compat load] loaded from', k);
+      return;
+    }catch(_e){ /* 다음 키 시도 */ }
+  }
+  // 아무것도 못 찾으면 초기 상태
+  state={routine:null, stickers:0, coupons:0, awardedDates:{}, happyDays:{}};
+}
+function save(){ Store.set(SAVE_KEY, JSON.stringify(state)); }
+
+/* ===== Tabs ===== */
+function setTab(name){
+  document.querySelectorAll('.tab').forEach(el=> el.classList.toggle('active', el.dataset.action===`tab:${name}`));
+  document.getElementById('view-dashboard').classList.toggle('hidden', name!=='dashboard');
+  document.getElementById('view-routine').classList.toggle('hidden', name!=='routine');
+  if(name==='dashboard') renderDashboard(); else renderRoutine();
+}
+
+/* ===== Kid Layout Import ===== */
+function isKidLayout(obj){ return obj && typeof obj.isoYear==='number' && typeof obj.isoWeek==='number' && Array.isArray(obj.subjects) && Array.isArray(obj.tasks) && obj.alloc; }
+function applyKidLayout(data){
+  const dayKeys=["월","화","수","목","금","토","일"];
+  const subjMap={}; (data.subjects||[]).forEach(s=>{ subjMap[s.id]={ name:s.name||s.id, color:s.color||null }; });
+  const [ws,we]=weekStartEnd(data.isoYear, data.isoWeek);
+  const weekDates=[]; for(let d=new Date(ws); d<=we; d=new Date(d.getFullYear(),d.getMonth(),d.getDate()+1)){ weekDates.push(fmtDate(d)); }
+  state.routine={ tasks:[], allocBool:{}, doneDates:{} };
+  (data.tasks||[]).forEach(t=>{
+    const id=t.id||('r_'+uid()); const subjectName=(subjMap[t.subject]?.name)||t.subject||'기타';
+    state.routine.tasks.push({ id, subject:subjectName, title:t.title||'과제', unitMinutes:t.unitMinutes||20 });
+    state.routine.allocBool[id] = {"월":false,"화":false,"수":false,"목":false,"금":false,"토":false,"일":false};
+    if(data.alloc && data.alloc[id]) dayKeys.forEach(k=> state.routine.allocBool[id][k]=!!data.alloc[id][k]);
+    state.routine.doneDates[id] = {}; // done은 사용자가 체크로 관리
+  });
+  const rangeEl=document.getElementById('week-range'); if(rangeEl) rangeEl.textContent=`${fmtDate(new Date(ws))} ~ ${fmtDate(new Date(we))}`;
+}
+
+/* ===== Routine ===== */
+function seedRoutine(){ state.routine={ tasks:[ {id:'r_read',subject:'국어',title:'독서 20분',unitMinutes:20}, {id:'r_math',subject:'수학',title:'문제 10개',unitMinutes:20}, {id:'r_eng',subject:'영어',title:'단어 15개',unitMinutes:15}, {id:'r_music',subject:'음악',title:'피아노 20분',unitMinutes:20}], allocBool:{}, doneDates:{} }; state.routine.tasks.forEach(t=>{ state.routine.allocBool[t.id]={"월":true,"화":false,"수":true,"목":false,"금":true,"토":false,"일":false}; state.routine.doneDates[t.id]={}; }); save(); }
+function ensureAllocBool(taskId){ if(!state.routine.allocBool) state.routine.allocBool={}; if(!state.routine.allocBool[taskId]) state.routine.allocBool[taskId] = {"월":false,"화":false,"수":false,"목":false,"금":false,"토":false,"일":false}; }
+function ensureDoneDates(taskId){ if(!state.routine.doneDates) state.routine.doneDates={}; if(!state.routine.doneDates[taskId]) state.routine.doneDates[taskId] = {}; }
+function renderRoutine(){ renderRoutineTasks(); renderRoutinePlan(); }
+function renderRoutineTasks(){ const tbody=document.querySelector('#routine-task-table tbody'); tbody.innerHTML=''; state.routine.tasks.forEach(t=>{ const tr=document.createElement('tr'); tr.innerHTML=`<td>${t.subject}</td><td class="left">${t.title}</td><td>${t.unitMinutes}</td>`; const td=document.createElement('td'); const edit=document.createElement('button'); edit.className='btn'; edit.textContent='수정'; const del=document.createElement('button'); del.className='btn danger'; del.textContent='삭제'; del.style.marginLeft='6px'; edit.onclick=()=>{ const ns=prompt('과목',t.subject); if(ns===null) return; const nt=prompt('제목',t.title); if(nt===null) return; const um=prompt('단위 분',t.unitMinutes); if(um===null) return; t.subject=ns||t.subject; t.title=nt||t.title; t.unitMinutes=parseInt(um)||t.unitMinutes; save(); renderRoutine(); renderDashboard(); }; del.onclick=()=>{ if(state.routine.allocBool) delete state.routine.allocBool[t.id]; if(state.routine.doneDates) delete state.routine.doneDates[t.id]; state.routine.tasks=state.routine.tasks.filter(x=>x!==t); save(); renderRoutine(); renderDashboard(); }; td.appendChild(edit); td.appendChild(del); tr.appendChild(td); tbody.appendChild(tr); }); }
+document.getElementById('r-btn-task-add').addEventListener('click',()=>{ const subject=(document.getElementById('r-new-subj').value||'').trim(); const title=(document.getElementById('r-new-title').value||'').trim(); const unitMinutes=parseInt(document.getElementById('r-new-min').value)||15; if(!subject||!title){ alert('과목/제목을 입력하세요.'); return; } const id='r_'+uid(); const t={id,subject,title,unitMinutes}; state.routine.tasks.push(t); ensureAllocBool(id); ensureDoneDates(id); save(); renderRoutine(); renderDashboard(); document.getElementById('r-new-subj').value=''; document.getElementById('r-new-title').value=''; document.getElementById('r-new-min').value=''; });
+function renderRoutinePlan(){ const tbody=document.querySelector('#routine-plan-table tbody'); tbody.innerHTML=''; const days=["월","화","수","목","금","토","일"]; const [y,w]=getISOWeek(new Date()); const [ws,we]=weekStartEnd(y,w); const weekDatesArr=[]; for(let d=new Date(ws); d<=we; d=new Date(d.getFullYear(),d.getMonth(),d.getDate()+1)){ weekDatesArr.push(fmtDate(d)); } state.routine.tasks.forEach(t=>{ ensureAllocBool(t.id); ensureDoneDates(t.id); const tr=document.createElement('tr'); const tdTask=document.createElement('td'); tdTask.className='left'; tdTask.innerHTML=`<strong>${t.title}</strong> <span class="small">(${t.subject} · ${t.unitMinutes}분)</span>`; tr.appendChild(tdTask); let assigned=0; days.forEach(d=>{ const td=document.createElement('td'); const on=!!state.routine.allocBool[t.id][d]; if(on) assigned++; const btn=document.createElement('button'); btn.type='button'; btn.className='daybtn'+(on?' on':''); btn.textContent= on ? '배정됨' : '배정 안함'; btn.setAttribute('aria-pressed', on ? 'true' : 'false'); btn.onclick=()=>{ state.routine.allocBool[t.id][d]=!on; save(); renderRoutine(); renderDashboard(); }; btn.onkeydown=ev=>{ if(ev.key==='Enter'||ev.key===' '){ ev.preventDefault(); btn.click(); } }; td.appendChild(btn); tr.appendChild(td); }); let doneCount=0; const doneMap=state.routine.doneDates[t.id]||{}; const doneSet=new Set(); Object.keys(doneMap).forEach(ds=>{ if(doneMap[ds] && isBetweenDates(ds,ws,we)){ const kd=dateToKDay(ds); if(state.routine.allocBool[t.id][kd]){ doneCount++; doneSet.add(ds);} } }); weekDatesArr.forEach(ds=>{ if(state.happyDays && state.happyDays[ds]){ const kd=dateToKDay(ds); if(state.routine.allocBool[t.id][kd] && !doneSet.has(ds)) doneCount++; } }); const tdSum=document.createElement('td'); const pct=assigned>0?Math.round((doneCount/assigned)*100):0; tdSum.innerHTML=`<div class="small">배정 ${assigned} · 완료 ${doneCount}</div><div class="minibar"><span style="width:${pct}%"></span></div>`; tr.appendChild(tdSum); tbody.appendChild(tr); }); }
+
+/* ===== Dashboard ===== */
+function renderDashboard(){ renderTodayList(); renderBacklogList(); renderWeeklySummaryCard(); renderStickerBank(); }
+
+function renderTodayList(){
+  const host=document.getElementById('today-list'); host.innerHTML='';
+  const today=fmtDate(new Date());
+  const todayName=["일","월","화","수","목","금","토"][new Date().getDay()];
+  if(state.happyDays && state.happyDays[today]){
+    host.innerHTML = '<div class="badge-chip">🎉 해피데이! 오늘은 쉬는 날이에요.</div>';
+    return; // 해피데이는 스티커 자동 지급 없음
+  }
+  let total=0, done=0;
+  state.routine.tasks.forEach(t=>{
+    ensureAllocBool(t.id); ensureDoneDates(t.id);
+    const on = state.routine.allocBool[t.id][todayName];
+    if(on){
+      total++;
+      const isDone = !!state.routine.doneDates[t.id][today];
+      if(isDone) done++;
+      const row=document.createElement('label'); row.className='tag'+(isDone?' done':''); 
+      const ck=document.createElement('input'); ck.type='checkbox'; ck.checked=isDone;
+      ck.onchange=()=>{ state.routine.doneDates[t.id][today]=ck.checked; save(); renderDashboard(); };
+      const txt=document.createElement('span'); txt.textContent = `${t.subject} · ${t.title}`;
+      row.appendChild(ck); row.appendChild(txt); host.appendChild(row);
+    }
+  });
+  if(total===0){ host.innerHTML='<div class="tiny">오늘로 배정된 항목이 없습니다.</div>'; }
+  // 오늘 항목 모두 완료 시 스티커 1개 지급 (하루 1회)
+  if(total>0 && done===total){
+    if(!state.awardedDates) state.awardedDates={};
+    const todayStr=today;
+    if(!state.awardedDates[todayStr]){
+      state.awardedDates[todayStr]=true;
+      state.stickers = (state.stickers||0) + 1;
+      save();
+      const sEl=document.getElementById('sticker-count'); if(sEl) sEl.textContent=state.stickers;
+    }
+  }
+}
+
+// NEW: Backlog list (missed tasks within this week, excluding today and excluding happyDays)
+function renderBacklogList(){
+  const host=document.getElementById('backlog-list'); if(!host) return;
+  host.innerHTML='';
+  const now=new Date();
+  const [y,w]=getISOWeek(now); const [ws,we]=weekStartEnd(y,w);
+  const todayStr=fmtDate(now);
+  // 날짜 리스트: 이번 주 월요일 ~ 어제
+  const dates=[];
+  for(let d=new Date(ws); d<now; d=new Date(d.getFullYear(),d.getMonth(),d.getDate()+1)){
+    const ds=fmtDate(d);
+    if(ds===todayStr) break;
+    dates.push(ds);
+  }
+  let count=0;
+  state.routine.tasks.forEach(t=>{
+    ensureAllocBool(t.id); ensureDoneDates(t.id);
+    dates.forEach(ds=>{
+      // 해피데이는 면제
+      if(state.happyDays && state.happyDays[ds]) return;
+      const dayName=dateToKDay(ds);
+      if(state.routine.allocBool[t.id][dayName] && !state.routine.doneDates[t.id][ds]){
+        const row=document.createElement('label'); row.className='tag';
+        const ck=document.createElement('input'); ck.type='checkbox'; ck.checked=false;
+        ck.onchange=()=>{ state.routine.doneDates[t.id][ds]=true; save(); maybeAwardStickerForDate(ds); renderDashboard(); };
+        const txt=document.createElement('span'); txt.textContent=`${t.subject} · ${t.title} (${dayName})`;
+        row.appendChild(ck); row.appendChild(txt); host.appendChild(row);
+        count++;
+      }
+    });
+  });
+  if(count===0){
+    host.innerHTML='<div class="tiny">밀린 할 일이 없습니다. 잘하고 있어요! 👏</div>';
+  }
+}
+
+// Helper: retro-award sticker for a specific date if that day's all assigned tasks are done
+function maybeAwardStickerForDate(ds){
+  // no sticker if the day was set as happy day
+  if(state.happyDays && state.happyDays[ds]) return;
+  if(!state.awardedDates) state.awardedDates = {};
+  if(state.awardedDates[ds]) return;
+  const dayName = dateToKDay(ds);
+  let assigned = 0, done = 0;
+  state.routine.tasks.forEach(t=>{
+    ensureAllocBool(t.id); ensureDoneDates(t.id);
+    if(state.routine.allocBool[t.id][dayName]){
+      assigned++;
+      if(state.routine.doneDates[t.id][ds]) done++;
+    }
+  });
+  if(assigned>0 && done===assigned){
+    state.awardedDates[ds] = true;
+    state.stickers = (state.stickers||0) + 1;
+    save();
+  }
+}
+
+
+/* ===== Print Today's Tasks ===== */
+(function(){
+  document.addEventListener('click', function(e){
+    const btn = e.target.closest('#btn-print-today');
+    if(!btn) return;
+    try{
+      const now = new Date();
+      const todayStr = fmtDate(now);
+      const todayName = ["일","월","화","수","목","금","토"][now.getDay()];
+      if(!state || !state.routine || !state.routine.tasks || state.routine.tasks.length===0){
+        alert('할 일 데이터가 없습니다.');
+        return;
+      }
+      // Collect today's assigned tasks (regardless of current completion)
+      const items = [];
+      state.routine.tasks.forEach(t=>{
+        ensureAllocBool(t.id); ensureDoneDates(t.id);
+        if(state.routine.allocBool[t.id][todayName]){
+          items.push(`${t.subject} · ${t.title}`);
+        }
+      });
+      if(items.length===0){
+        alert('오늘로 배정된 할 일이 없습니다.');
+        return;
+      }
+      // Populate print sheet
+      const pDate = document.getElementById('print-date');
+      const pList = document.getElementById('print-list');
+      if(pDate) pDate.textContent = `${todayStr} (${todayName})`;
+      if(pList){
+        pList.innerHTML = '';
+        items.forEach((txt,i)=>{
+          const li = document.createElement('li');
+          li.textContent = `☐ ${txt}`;
+          pList.appendChild(li);
+        });
+      }
+      // Show print-sheet and trigger window.print()
+      const sheet = document.getElementById('print-sheet');
+      if(sheet) sheet.classList.remove('hidden');
+      window.print();
+      // After printing, hide the sheet again
+      setTimeout(()=>{ if(sheet) sheet.classList.add('hidden'); }, 100);
+    }catch(err){
+      alert('인쇄 준비 중 오류가 발생했습니다: ' + err.message);
+    }
+  });
+})();
+function weeklyAssignedDone(){ const [y,w]=getISOWeek(new Date()); const [ws,we]=weekStartEnd(y,w); const days=["월","화","수","목","금","토","일"]; const weekDatesArr=[]; for(let d=new Date(ws); d<=we; d=new Date(d.getFullYear(),d.getMonth(),d.getDate()+1)){ weekDatesArr.push(fmtDate(d)); } let totalAssigned=0,totalDone=0; state.routine.tasks.forEach(t=>{ const assigned=days.reduce((acc,d)=>acc+(state.routine.allocBool[t.id][d]?1:0),0); totalAssigned+=assigned; let done=0; const dm=state.routine.doneDates[t.id]||{}; const doneSet=new Set(); Object.keys(dm).forEach(ds=>{ if(dm[ds] && isBetweenDates(ds,ws,we)){ const kd=dateToKDay(ds); if(state.routine.allocBool[t.id][kd]){ done++; doneSet.add(ds);} } }); weekDatesArr.forEach(ds=>{ if(state.happyDays && state.happyDays[ds]){ const kd=dateToKDay(ds); if(state.routine.allocBool[t.id][kd] && !doneSet.has(ds)) done++; } }); totalDone+=done; }); return {totalAssigned,totalDone}; }
+function renderWeeklySummaryCard(){ const bar=document.getElementById('weekly-bar'); const txt=document.getElementById('weekly-text'); const list=document.getElementById('weekly-list'); list.innerHTML=''; const [y,w]=getISOWeek(new Date()); const [ws,we]=weekStartEnd(y,w); const days=["월","화","수","목","금","토","일"]; const weekDatesArr=[]; for(let d=new Date(ws); d<=we; d=new Date(d.getFullYear(),d.getMonth(),d.getDate()+1)){ weekDatesArr.push(fmtDate(d)); } let totalAssigned=0,totalDone=0; state.routine.tasks.forEach(t=>{ ensureAllocBool(t.id); ensureDoneDates(t.id); const assigned=days.reduce((acc,d)=>acc+(state.routine.allocBool[t.id][d]?1:0),0); totalAssigned+=assigned; let done=0; const dm=state.routine.doneDates[t.id]||{}; const doneSet=new Set(); Object.keys(dm).forEach(ds=>{ if(dm[ds] && isBetweenDates(ds,ws,we)){ const kd=dateToKDay(ds); if(state.routine.allocBool[t.id][kd]){ done++; doneSet.add(ds);} } }); weekDatesArr.forEach(ds=>{ if(state.happyDays && state.happyDays[ds]){ const kd=dateToKDay(ds); if(state.routine.allocBool[t.id][kd] && !doneSet.has(ds)) done++; } }); totalDone+=done; const card=document.createElement('div'); card.className='tcard'; const head=document.createElement('div'); head.className='thead'; head.textContent=`${t.subject} · ${t.title}`; const info=document.createElement('div'); info.className='info'; info.textContent=`배정 ${assigned} · 완료 ${done}`; const pct=assigned>0?Math.round((done/assigned)*100):0; const barMini=document.createElement('div'); barMini.className='minibar'; const span=document.createElement('span'); span.style.width=pct+'%'; barMini.appendChild(span); card.appendChild(head); card.appendChild(info); card.appendChild(barMini); list.appendChild(card); }); const {totalAssigned:a,totalDone:d}= {totalAssigned,totalDone}; const pctAll=a>0?Math.round((d/a)*100):0; bar.style.width=pctAll+'%'; txt.textContent=`배정 ${a} · 완료 ${d}`; }
+
+/* ===== Gamify ===== */
+function ensureGamify(){ if(state.stickers===undefined) state.stickers=0; if(state.coupons===undefined) state.coupons=0; if(!state.awardedDates) state.awardedDates={}; if(!state.happyDays) state.happyDays={}; }
+function renderStickerBank(){ ensureGamify(); const sEl=document.getElementById('sticker-count'); const cEl=document.getElementById('coupon-count'); const btnUse=document.getElementById('btn-use-coupon'); const btnConvert=document.getElementById('btn-convert-coupon'); const status=document.getElementById('coupon-status'); const dateInput=document.getElementById('coupon-date'); const today=fmtDate(new Date()); if(dateInput && !dateInput.value) dateInput.value=today; const selected=dateInput?dateInput.value:today; if(sEl) sEl.textContent=state.stickers||0; if(cEl) cEl.textContent=state.coupons||0; if(btnConvert){ btnConvert.disabled=(state.stickers||0)<50; btnConvert.onclick=()=>{ if((state.stickers||0)<50) return; state.stickers-=50; state.coupons=(state.coupons||0)+1; save(); renderStickerBank(); }; }
+  if(btnUse){ const already=!!(state.happyDays&&state.happyDays[selected]); btnUse.disabled=(state.coupons||0)<=0||already||!selected; btnUse.onclick=()=>{ if((state.coupons||0)<=0||!dateInput||!dateInput.value) return; const sel=dateInput.value; if(state.happyDays&&state.happyDays[sel]) return; state.coupons-=1; if(!state.happyDays) state.happyDays={}; state.happyDays[sel]=true; save(); renderAll(); }; if(dateInput){ dateInput.onchange=()=>{ renderStickerBank(); }; } }
+  if(status){ const sel=dateInput?dateInput.value:today; status.textContent= sel && state.happyDays && state.happyDays[sel] ? `${sel}은 이미 해피데이로 지정됨` : ''; }
+}
+
+
+/* ===== GitHub Gist Sync ===== */
+const GIST_TOKEN_KEY = "midplanner:gist_token";
+const GIST_ID_KEY = "midplanner:gist_id";
+
+function loadGistConfigUI(){
+  const t = localStorage.getItem(GIST_TOKEN_KEY) || "";
+  const g = localStorage.getItem(GIST_ID_KEY) || "";
+  const tEl = document.getElementById('gist-token');
+  const gEl = document.getElementById('gist-id');
+  if(tEl) tEl.value = t;
+  if(gEl) gEl.value = g;
+}
+
+async function gistSave(){
+  const status = (msg)=>{ const s=document.getElementById('gist-status'); if(s) s.textContent=msg; };
+  try{
+    const token = (document.getElementById('gist-token')?.value||"").trim();
+    const gistId = (document.getElementById('gist-id')?.value||"").trim();
+    if(!token){ alert("GitHub Token을 입력해주세요 (gist 권한 필수)."); return; }
+    // persist token/id locally for convenience
+    localStorage.setItem(GIST_TOKEN_KEY, token);
+    if(gistId) localStorage.setItem(GIST_ID_KEY, gistId);
+
+    const payload = {
+      description: "Study Planner state backup",
+      public: false,
+      files: {
+        "planner_state.json": { content: JSON.stringify(state, null, 2) }
+      }
+    };
+
+    status("Gist 저장 중...");
+    let res;
+    if(gistId){
+      // update
+      res = await fetch(`https://api.github.com/gists/${gistId}`, {
+        method: "PATCH",
+        headers: { "Authorization": `Bearer ${token}`, "Accept": "application/vnd.github+json" },
+        body: JSON.stringify({ files: payload.files })
+      });
+    }else{
+      // create
+      res = await fetch("https://api.github.com/gists", {
+        method: "POST",
+        headers: { "Authorization": `Bearer ${token}`, "Accept": "application/vnd.github+json" },
+        body: JSON.stringify(payload)
+      });
+    }
+    if(!res.ok){
+      const text = await res.text();
+      throw new Error(text || `HTTP ${res.status}`);
+    }
+    const data = await res.json();
+    const newId = data.id;
+    if(newId){
+      localStorage.setItem(GIST_ID_KEY, newId);
+      const idEl=document.getElementById('gist-id'); if(idEl) idEl.value=newId;
+    }
+    status(`저장 완료! Gist ID: ${localStorage.getItem(GIST_ID_KEY)}`);
+    alert("Gist 저장이 완료되었습니다.");
+  }catch(err){
+    console.error(err);
+    alert("Gist 저장 실패: " + err.message);
+  }
+}
+
+async function gistLoad(){
+  const status = (msg)=>{ const s=document.getElementById('gist-status'); if(s) s.textContent=msg; };
+  try{
+    const token = (document.getElementById('gist-token')?.value||"").trim();
+    const gistId = (document.getElementById('gist-id')?.value||"").trim() || localStorage.getItem(GIST_ID_KEY);
+    if(!gistId){ alert("Gist ID가 없습니다. 먼저 저장하거나 ID를 입력하세요."); return; }
+    if(token) localStorage.setItem(GIST_TOKEN_KEY, token);
+    localStorage.setItem(GIST_ID_KEY, gistId);
+
+    status("Gist 불러오는 중...");
+    const res = await fetch(`https://api.github.com/gists/${gistId}`, {
+      headers: token ? { "Authorization": `Bearer ${token}`, "Accept": "application/vnd.github+json" } : { "Accept":"application/vnd.github+json" }
+    });
+    if(!res.ok){
+      const text = await res.text();
+      throw new Error(text || `HTTP ${res.status}`);
+    }
+    const data = await res.json();
+    const file = data.files?.["planner_state.json"];
+    if(!file || !file.content){ throw new Error("planner_state.json 파일을 Gist에서 찾을 수 없습니다."); }
+
+    // apply state
+    const obj = JSON.parse(file.content);
+    state = obj;
+    save();
+    renderAll();
+    status("불러오기 완료.");
+    alert("Gist에서 불러오기 완료!");
+  }catch(err){
+    console.error(err);
+    alert("Gist 불러오기 실패: " + err.message);
+  }
+}
+
+document.addEventListener('DOMContentLoaded', ()=>{
+  // bind UI
+  const sBtn = document.getElementById('btn-gist-save');
+  const lBtn = document.getElementById('btn-gist-load');
+  if(sBtn) sBtn.addEventListener('click', gistSave);
+  if(lBtn) lBtn.addEventListener('click', gistLoad);
+  loadGistConfigUI();
+});
+
+/* ===== Reset Buttons ===== */
+(function(){ const resetAll=document.getElementById('btn-reset-all'); if(resetAll){ resetAll.addEventListener('click',()=>{ if(!confirm('모든 데이터를 삭제할까요?')) return; localStorage.removeItem(SAVE_KEY); state={routine:null, stickers:0, coupons:0, awardedDates:{}, happyDays:{}}; seedRoutine(); renderAll(); }); } const resetWeek=document.getElementById('btn-reset-week'); if(resetWeek){ resetWeek.addEventListener('click',()=>{ if(!confirm('이번 주의 완료 기록을 모두 지울까요?')) return; if(!state.routine||!state.routine.doneDates) return; const [y,w]=getISOWeek(new Date()); const [ws,we]=weekStartEnd(y,w); Object.keys(state.routine.doneDates).forEach(tid=>{ const dm=state.routine.doneDates[tid]||{}; Object.keys(dm).forEach(ds=>{ if(isBetweenDates(ds,ws,we)) delete dm[ds]; }); }); save(); renderAll(); }); }
+})();
+
+/* ===== Render All ===== */
+function renderAll(){ renderDashboard(); renderRoutine(); }
+</script>
+
+  <!-- Print Sheet for Today's Tasks -->
+  <div id="print-sheet" class="hidden">
+    <div style="max-width:700px;margin:0 auto;padding:24px;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Noto Sans KR,Apple SD Gothic Neo,Malgun Gothic,Arial;color:#111">
+      <h1 style="margin:0 0 6px 0;font-size:24px;letter-spacing:-.3px">오늘 할 일 체크리스트</h1>
+      <div id="print-date" style="color:#555;margin-bottom:14px;font-size:14px"></div>
+      <ol id="print-list" style="padding-left:18px;margin:0 0 18px 0;line-height:1.8"></ol>
+      <div style="margin-top:24px;font-size:14px;color:#444;display:flex;justify-content:space-between;gap:16px">
+        <div>보상 스티커: ☐</div>
+        <div>확인(보호자 서명): ______________________</div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
