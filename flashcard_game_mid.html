@@ -438,7 +438,7 @@ async function loadFromRepo(relPath){
     alert('저장소 JSON 불러오기 실패:\\n' + (e?.message || e));
   }
 }
-const BASE_URL = 'https://raw.githubusercontent.com/MyBestTutor/stella/main/';
+const BASE_URL = 'https://raw.githubusercontent.com/MyBestTutor/alex/main/';
 $('loadRepo_5_15').onclick = ()=> loadFromRepo(BASE_URL + 'words_ort_5_15.json');
 $('loadRepo_5_16').onclick = ()=> loadFromRepo(BASE_URL + 'words_ort_5_16.json');
 $('loadRepo_5_17').onclick = ()=> loadFromRepo(BASE_URL + 'words_ort_5_17.json');
