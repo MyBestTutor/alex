@@ -208,7 +208,7 @@ input.addEventListener('change', async (e)=>{
 });
 
 // ---- Repo loader (Theme C pattern) ----
-const BASE_URL = 'https://raw.githubusercontent.com/MyBestTutor/stella/main/';
+const BASE_URL = 'https://raw.githubusercontent.com/MyBestTutor/alex/main/';
 async function fetchText(url){
   const bust = (url.includes('?') ? '&' : '?') + 'v=' + Date.now();
   const res = await fetch(url + bust, {cache:'no-store'});
