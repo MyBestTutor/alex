@@ -2,63 +2,148 @@
 <html lang="ko">
 <head>
 <meta charset="utf-8"/>
-<title>🧩 문장 만들기 게임 – 클린 그린</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>문장 만들기 · Flashcard 스타일 UI</title>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
 <style>
   :root{
-    --mint:#ecfdf5; --mint2:#d1fae5; --mint3:#a7f3d0; --mint4:#6ee7b7;
-    --mint5:#34d399; --mint6:#10b981; --mint7:#059669; --ink:#064e3b;
+    --bg:#f7f8fa;
+    --bg1:#ecfeff;
+    --bg2:#f5f3ff;
+    --panel:#ffffff;
+    --ink:#0b1220;
+    --muted:#667085;
+    --border:#e5e7eb;
+    --accent:#0ea5e9;
+    --accent-2:#7c3aed;
+    --radius:14px;
+    --shadow:0 8px 22px rgba(2,6,23,.06);
+    --tint-1: rgba(14,165,233,0.08);
   }
   *{box-sizing:border-box}
-  body{ margin:0; min-height:100vh; display:flex; align-items:center; justify-content:center; padding:20px;
-        background:linear-gradient(180deg,#f0fdf4,#ecfeff); font-family:Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; color:var(--ink); }
-  .wrap{ width:min(900px,96vw); background:#ffffffee; backdrop-filter:blur(8px); border-radius:24px; padding:20px;
-         border:1px solid rgba(0,0,0,.06); box-shadow:0 24px 48px rgba(0,0,0,.08); }
-  h1{ margin:0 0 8px; font-size:2rem; color:#059669; text-align:center; }
-  a.home{ text-decoration:none; background:linear-gradient(180deg, #10b981, #059669); color:#fff; padding:10px 14px; border-radius:12px; display:inline-block; margin-bottom:10px; font-weight:900; }
-  .ttsbar{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; justify-content:center; margin:8px 0 12px;}
-  .ttsbar label{ font-weight:800; }
-  .quiz{ background:#fff; border-radius:18px; border:1px solid rgba(0,0,0,.06); box-shadow:0 12px 20px rgba(0,0,0,.08); padding:18px; }
-  #speakButton{ margin-bottom:22px; }
-  .target{ min-height:120px; border:3px dashed var(--mint3); background:var(--mint); border-radius:16px; padding:16px; display:flex; flex-wrap:wrap; justify-content:center; align-items:center; margin-bottom:16px; font-weight:900; color:#065f46; }
-  .bank{ border:2px solid var(--mint3); background:#f7fee7; border-radius:14px; padding:10px; display:flex; flex-wrap:wrap; justify-content:center; }
-  .chip{ padding:10px 16px; margin:8px; cursor:pointer; color:#fff; border:none; border-radius:12px; font-weight:900; background:linear-gradient(180deg, var(--mint5), var(--mint6)); box-shadow:0 6px 12px rgba(16,185,129,.35); }
-  .btnrow{ display:flex; flex-wrap:wrap; justify-content:center; gap:10px; margin-top:12px; }
-  .btn{ padding:12px 18px; border:none; border-radius:14px; font-weight:900; cursor:pointer; color:#fff; background:linear-gradient(180deg, var(--mint6), var(--mint7)); box-shadow:0 8px 16px rgba(0,0,0,.12); }
-  .btn.ghost{ background:#e2e8f0; color:#0f172a; }
-  .note{ margin-top:10px; padding:10px; border-radius:12px; border:1px dashed var(--mint3); display:none; }
-  .ok{ box-shadow:0 0 0 4px rgba(52,211,153,.35) inset; }
-  .bad{ box-shadow:0 0 0 4px rgba(239,68,68,.25) inset; }
+  html,body{height:100%; margin:0}
+  body{
+    font-family:'Pretendard', ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    color:var(--ink);
+    background:
+      radial-gradient(900px 500px at -10% -10%, var(--bg1), transparent 60%),
+      radial-gradient(900px 600px at 110% -10%, var(--bg2), transparent 60%),
+      linear-gradient(180deg, #ffffff, #f8fafc);
+    -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
+  }
+  .wrap{ width:min(960px,96vw); margin:22px auto; }
+
+  .appbar{
+    position:sticky; top:0; z-index:10;
+    background:linear-gradient(180deg, rgba(255,255,255,.92), rgba(255,255,255,.88));
+    backdrop-filter:saturate(160%) blur(6px);
+    border:1px solid var(--border); border-radius:12px; box-shadow:var(--shadow);
+    display:flex; align-items:center; gap:12px; padding:12px 14px;
+  }
+  .title{
+    position:relative;
+    font-weight:800; letter-spacing:-.3px; font-size:1.15rem;
+    background:linear-gradient(90deg, var(--accent), var(--accent-2));
+    -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+  }
+  .appbar::after{
+    content:""; position:absolute; left:0; bottom:0; width:100%; height:5px;
+    border-radius:0 0 12px 12px;
+    background:linear-gradient(90deg,var(--accent),var(--accent-2));
+    opacity:.9; pointer-events:none;
+  }
+  .spacer{flex:1}
+  .chip{ display:inline-flex; align-items:center; gap:8px; padding:6px 10px; border-radius:999px;
+    border:1px solid var(--border); background:#fff; color:#muted; font-weight:700; font-size:.9rem }
+
+  .panel{
+    background:
+      linear-gradient(0deg, #fff, #fff) padding-box,
+      linear-gradient(135deg, var(--accent), var(--accent-2)) border-box;
+    border:1px solid transparent; border-radius:var(--radius);
+    box-shadow:var(--shadow); padding:14px;
+  }
+  .panel h3{ margin:0 0 8px; font-size:0.98rem; font-weight:700; letter-spacing:-.2px; color:#0f172a }
+  .grid{ display:grid; gap:12px }
+  .row{ display:flex; align-items:center; gap:10px; flex-wrap:wrap }
+  @media(min-width:900px){ .layout{ display:grid; grid-template-columns:1fr; gap:12px } }
+
+  .btn{
+    appearance:none; border:1px solid var(--border); background:#fff; color:var(--ink);
+    border-radius:12px; padding:10px 14px; font-weight:700; cursor:pointer; box-shadow:var(--shadow);
+    transition: background .12s ease, border-color .12s ease, transform .06s ease;
+  }
+  .btn:hover{ background:var(--tint-1) }
+  .btn:active{ transform: translateY(1px) }
+  .btn:disabled{ opacity:.6; cursor:not-allowed; box-shadow:none }
+  .btn-primary{ background:linear-gradient(180deg, var(--accent), #0b9ed6); color:#fff; border-color:transparent }
+  .btn-ghost{ background:#f1f5f9 }
+
+  .flashcard-box{ width:min(860px,94vw); margin:8px auto; }
+  .target{
+    min-height:110px; display:flex; flex-wrap:wrap; align-items:center; justify-content:center;
+    border-radius:14px; border:1px solid var(--border);
+    background:linear-gradient(180deg, #ffffff, rgba(14,165,233,0.06));
+    font-size:1.3rem; font-weight:800; text-align:center; padding:16px;
+  }
+  .target.ok{ box-shadow:0 0 0 4px rgba(52,211,153,.28) inset }
+  .target.bad{ box-shadow:0 0 0 4px rgba(239,68,68,.22) inset }
+  .bank{
+    border:1px solid var(--border); background:#fff; border-radius:14px; padding:10px;
+    display:flex; flex-wrap:wrap; justify-content:center; gap:8px;
+  }
+  .chipword{
+    padding:10px 16px; border:1px solid var(--border); border-radius:12px; font-weight:800; cursor:pointer;
+    background:#fff; box-shadow:var(--shadow);
+  }
+
+  .counter{ text-align:center; color:#475569; font-weight:700; margin-top:4px }
+  .note{ margin-top:10px; padding:10px; border-radius:12px; border:1px dashed var(--border); display:none; }
+
+  .hidden{ display:none }
 </style>
 </head>
 <body>
-<div class="wrap">
-  <h1>🧩 문장 만들기 게임</h1>
-  <a href="index.html" class="home">🏠 홈으로</a>
+  <div class="wrap">
+    <header class="appbar">
+      <div class="title">문장 만들기</div>
+      <div class="spacer"></div>
+      <div class="chip">문장 <b id="chipCount">0</b>개</div>
+      <div class="chip">진행 <b id="chipProgress">—</b></div>
+    </header>
 
-  <!-- TTS Controls -->
-  <div class="ttsbar">
-    <label>🎚️ 속도 <input id="ttsRate" type="range" min="0.5" max="1.2" step="0.05" value="0.85"></label>
-    <label>🎵 톤 <input id="ttsPitch" type="range" min="0.8" max="1.3" step="0.05" value="1.00"></label>
-    <label>🗣️ 보이스 <select id="ttsVoice"></select></label>
+    <main class="grid" style="margin-top:12px">
+      <section class="panel">
+        <h3>음성(TTS) 설정</h3>
+        <div class="row">
+          <label>🎚️ 속도 <input id="ttsRate" type="range" min="0.5" max="1.2" step="0.05" value="0.85"></label>
+          <label>🎵 톤 <input id="ttsPitch" type="range" min="0.8" max="1.3" step="0.05" value="1.00"></label>
+          <label>🗣️ 보이스 <select id="ttsVoice"></select></label>
+          <button id="btnSpeak" class="btn">🎧 문장 듣기</button>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h3>문장 만들기</h3>
+        <div class="flashcard-box">
+          <div id="target" class="target" data-ph="문장을 만들어 보세요.">문장을 만들어 보세요.</div>
+        </div>
+        <div id="bank" class="bank"></div>
+
+        <div class="row" style="justify-content:center; margin-top:10px">
+          <button class="btn btn-ghost" id="btnReset">🔄 다시 하기</button>
+          <button class="btn btn-primary" id="btnNext">➡️ 다음 문장</button>
+        </div>
+        <div id="counter" class="counter"></div>
+        <div id="feedback" class="note"></div>
+      </section>
+
+      <section id="needFile" class="panel hidden">
+        먼저 <b>index.html</b>에서 문장 파일(JSON)을 선택해 주세요.
+      </section>
+    </main>
   </div>
-
-  <div id="needFile" class="note">먼저 <b>index.html</b>에서 문장 파일을 선택해 주세요.</div>
-
-  <div class="quiz" id="game" style="display:none;">
-    <button class="btn ghost" id="speakButton" disabled>🎧 문장 듣기</button>
-    <div id="target" class="target" data-ph="문장을 만들어 보세요.">문장을 만들어 보세요.</div>
-    <div id="bank" class="bank"></div>
-    <div id="feedback" class="note"></div>
-    <div class="btnrow">
-      <button class="btn ghost" id="btnReset">🔄 다시 하기</button>
-      <button class="btn" id="btnNext">➡️ 다음 문장</button>
-    </div>
-  </div>
-</div>
 
 <script>
-/* ==== WebAudio SFX ==== */
 let audioCtx=null;
 function unlock(){
   try{ if(!audioCtx) audioCtx=new (window.AudioContext||window.webkitAudioContext)();
@@ -83,7 +168,6 @@ function badSfx(){ if(!audioCtx) return; const o=audioCtx.createOscillator(), g=
   g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime+0.3);
   o.connect(g).connect(audioCtx.destination); o.start(); o.frequency.exponentialRampToValueAtTime(120, audioCtx.currentTime+0.25); o.stop(audioCtx.currentTime+0.32); }
 
-/* ==== Shared TTS helpers ==== */
 let VS=[], rate=0.85, pitch=1.0, vname='';
 function bindTts(){
   const r=document.getElementById('ttsRate'), p=document.getElementById('ttsPitch'), v=document.getElementById('ttsVoice');
@@ -93,6 +177,12 @@ function bindTts(){
   function populate(){
     VS = speechSynthesis.getVoices();
     v.innerHTML=''; const en=VS.filter(x=>x.lang && x.lang.toLowerCase().startsWith('en'));
+    const prefs = ['Google US English','Google UK English Female','Microsoft Aria','Microsoft Jenny','Samantha'];
+    en.sort((a,b)=>{
+      const ai=prefs.findIndex(p=>(a.name||'').includes(p));
+      const bi=prefs.findIndex(p=>(b.name||'').includes(p));
+      return (ai<0?99:ai)-(bi<0?99:bi);
+    });
     en.forEach(x=>{ const o=document.createElement('option'); o.value=x.name; o.textContent=x.name+' ('+x.lang+')'; if(keepV && keepV===x.name) o.selected=true; v.appendChild(o); });
     vname = v.value || keepV || '';
   }
@@ -107,66 +197,75 @@ function speak(text){
   if(vv) u.voice=vv; u.lang='en-US'; u.rate=rate; u.pitch=pitch; speechSynthesis.speak(u);
 }
 
-/* ==== Game state ==== */
-let data=[], i=0, PH='문장을 만들어 보세요.', target, bank, note, speakBtn, needFile, game, words=[], expectCount=0, expectAnswer='';
+let data=[], i=0, PH='문장을 만들어 보세요.';
+const target = ()=>document.getElementById('target');
+const bank = ()=>document.getElementById('bank');
+const feedback = ()=>document.getElementById('feedback');
 
 function loadSession(){
   try{ const raw=sessionStorage.getItem('SENTENCE_LIST_JSON'); if(!raw) return null; const arr=JSON.parse(raw); if(Array.isArray(arr)&&arr.length>0) return arr.map(s=>String(s)); }catch(e){}
   return null;
 }
-function splitClean(s){ return s.replace(/[.,!]/g,'').trim().split(/\s+/).filter(Boolean); }
+function splitClean(s){ return s.replace(/[.,!?]/g,'').trim().split(/\s+/).filter(Boolean); }
 function shuffle(a){ for(let j=a.length-1;j>0;j--){ const k=Math.floor(Math.random()*(j+1)); [a[j],a[k]]=[a[k],a[j]];} return a; }
-
-function init(){
-  target=document.getElementById('target'); bank=document.getElementById('bank'); note=document.getElementById('feedback');
-  speakBtn=document.getElementById('speakButton'); needFile=document.getElementById('needFile'); game=document.getElementById('game');
-  bindTts();
-  const arr=loadSession(); if(!arr){ needFile.style.display='block'; return; }
-  data=arr; game.style.display='block'; speakBtn.disabled=false;
-  loadQ();
-  document.getElementById('btnReset').onclick=resetChips;
-  document.getElementById('btnNext').onclick=nextQ;
-  speakBtn.onclick=()=>{ clickSfx(); speak(data[i]); note.style.display='block'; note.textContent='🔊 '+data[i]; };
+function updateChips(len){
+  document.getElementById('chipCount').textContent=len||0;
+  document.getElementById('chipProgress').textContent = len? ((i+1)+' / '+len) : '—';
+  document.getElementById('counter').textContent = len? ((i+1)+' / '+len) : '';
 }
 
 function makeChip(w, parent){
-  const c=document.createElement('button'); c.className='chip'; c.textContent=w; c.type='button';
+  const c=document.createElement('button'); c.className='chipword'; c.textContent=w; c.type='button';
   c.onclick=()=>{
-    clickSfx(); target.classList.remove('ok','bad'); note.style.display='none';
-    if(c.parentElement===bank){
-      if(target.textContent===PH) target.textContent='';
-      bank.removeChild(c); target.appendChild(c);
+    clickSfx(); target().classList.remove('ok','bad'); feedback().style.display='none';
+    if(c.parentElement===bank()){
+      if(target().textContent===PH) target().textContent='';
+      bank().removeChild(c); target().appendChild(c);
     }else{
-      target.removeChild(c); bank.appendChild(c);
-      if(target.children.length===0) target.textContent=PH;
+      target().removeChild(c); bank().appendChild(c);
+      if(target().children.length===0) target().textContent=PH;
     }
     autoCheck();
   };
   parent.appendChild(c);
 }
 
-function buildFromWords(){
-  target.innerHTML=''; bank.innerHTML=''; note.style.display='none'; target.classList.remove('ok','bad');
-  target.textContent=PH;
-  shuffle([...words]).forEach(w=>makeChip(w, bank));
+function buildFromWords(words){
+  target().innerHTML=''; bank().innerHTML=''; feedback().style.display='none'; target().classList.remove('ok','bad');
+  target().textContent=PH;
+  shuffle([...words]).forEach(w=>makeChip(w, bank()));
 }
 function loadQ(){
-  const s=data[i]; words = splitClean(s); expectCount=words.length; expectAnswer=words.join(' ');
-  buildFromWords();
+  const s=data[i]; const words = splitClean(s);
+  buildFromWords(words);
+  updateChips(data.length);
 }
-function resetChips(){ buildFromWords(); }
+function resetChips(){ loadQ(); }
 function nextQ(){ i=(i+1)%data.length; loadQ(); }
 
 function autoCheck(){
-  if(target.children.length!==expectCount) return;
-  const user=[...target.children].map(n=>n.textContent).join(' ');
-  if(user===expectAnswer){
-    target.classList.add('ok'); target.classList.remove('bad'); note.style.display='block'; note.textContent='🥳 정답! 멋져요!'; okSfx();
+  const words = [...target().children].map(n=>n.textContent);
+  const expect = splitClean(data[i]);
+  if(words.length!==expect.length) return;
+  const user = words.join(' '), answer = expect.join(' ');
+  if(user===answer){
+    target().classList.add('ok'); target().classList.remove('bad'); feedback().style.display='block'; feedback().textContent='🥳 정답! 멋져요!'; okSfx();
   }else{
-    target.classList.add('bad'); target.classList.remove('ok'); note.style.display='block'; note.textContent='🤔 순서가 달라요. 다시 시도!'; badSfx();
+    target().classList.add('bad'); target().classList.remove('ok'); feedback().style.display='block'; feedback().textContent='🤔 순서가 달라요. 다시 시도!'; badSfx();
   }
 }
 
+function init(){
+  bindTts();
+  const need = document.getElementById('needFile');
+  const arr = loadSession();
+  if(!arr){ need.classList.remove('hidden'); return; }
+  data = arr;
+  document.getElementById('btnSpeak').onclick=()=>{ speak(data[i]); feedback().style.display='block'; feedback().textContent='🔊 '+data[i]; };
+  document.getElementById('btnReset').onclick=resetChips;
+  document.getElementById('btnNext').onclick=nextQ;
+  loadQ();
+}
 document.addEventListener('DOMContentLoaded', init);
 </script>
 </body>

@@ -2,68 +2,164 @@
 <html lang="ko">
 <head>
 <meta charset="utf-8"/>
-<title>🏡 영어 놀이터 홈</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>🏡 영어 놀이터 · Theme C (가로·ORT)</title>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
 <style>
   :root{
-    --bg:#fffacd; --panel:#fff; --accent:#ff8c00; --shadow:rgba(255,165,0,.25);
-    --btn1:#ffeb3b; --btn1s:#fbc02d;
-    --btn2:#ff9800; --btn2s:#ef6c00;
-    --btn3:#8bc34a; --btn3s:#689f38;
-    --btnSel:#29b6f6; --btnSelS:#0288d1;
+    --bg:#f7f8fa;
+    --bg1:#ecfeff;
+    --bg2:#f5f3ff;
+    --panel:#ffffff;
+    --ink:#0b1220;
+    --muted:#667085;
+    --border:#e5e7eb;
+    --accent:#0ea5e9;   /* cyan */
+    --accent-2:#7c3aed; /* purple */
+    --radius:14px;
+    --shadow:0 8px 22px rgba(2,6,23,.06);
+    --tint-1: rgba(14,165,233,0.06);
   }
+  *{box-sizing:border-box}
+  html,body{height:100%; margin:0}
   body{
-    margin:0; min-height:100vh; display:flex; align-items:center; justify-content:center;
-    background:var(--bg); font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+    font-family:'Pretendard', ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    color:var(--ink);
+    background:
+      radial-gradient(900px 500px at -10% -10%, var(--bg1), transparent 60%),
+      radial-gradient(900px 600px at 110% -10%, var(--bg2), transparent 60%),
+      linear-gradient(180deg, #ffffff, #f8fafc);
+    -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
   }
-  .wrap{ width:min(900px,96vw); }
-  .card{ background:var(--panel); border-radius:20px; padding:22px; box-shadow:0 10px 30px var(--shadow); border:4px solid var(--accent); }
-  h1{ margin:0 0 18px; font-size:2.2rem; color:#ff4500; text-align:center; text-shadow:1px 1px 0 #ffd700; }
-  /* custom file picker */
-  #fileInput{ display:none; } /* hide native input to avoid '선택된 파일 없음' */
-  .picker{ display:flex; align-items:center; justify-content:center; gap:12px; margin:0 auto 18px; flex-wrap:wrap;}
-  .pick-btn{ background:var(--btnSel); color:#fff; border:none; border-radius:12px; padding:12px 16px; font-weight:900; cursor:pointer; box-shadow:0 4px 0 var(--btnSelS); }
-  .filename{ font-weight:900; color:#0f172a; background:#fff8e1; border:2px dashed var(--accent); border-radius:12px; padding:10px 14px; min-width:220px; text-align:center; }
-  .grid{ display:grid; gap:14px; grid-template-columns: repeat(auto-fit, minmax(260px,1fr)); }
-  .menu{ display:flex; align-items:center; justify-content:space-between; gap:14px; padding:16px 18px; border-radius:14px; text-decoration:none; color:#333; font-weight:800; box-shadow:0 4px 0 rgba(0,0,0,.2); }
-  .m1{ background:var(--btn1); box-shadow:0 4px 0 var(--btn1s); }
-  .m1:hover{ background:#ffc107; }
-  .m2{ background:var(--btn2); color:#fff; box-shadow:0 4px 0 var(--btn2s); }
-  .m2:hover{ background:#fb8c00; }
-  .m3{ background:var(--btn3); color:#fff; box-shadow:0 4px 0 var(--btn3s); }
-  .m3:hover{ background:#7cb342; }
-  .fname{ font-size:.9rem; font-weight:900; }
+  .wrap{ width:min(1100px,96vw); margin:22px auto; display:flex; flex-direction:column; gap:12px; }
+
+  /* Appbar – Theme C */
+  .appbar{
+    position:sticky; top:0; z-index:10;
+    background:linear-gradient(180deg, rgba(255,255,255,.92), rgba(255,255,255,.88));
+    backdrop-filter:saturate(160%) blur(6px);
+    border:1px solid var(--border); border-radius:12px; box-shadow:var(--shadow);
+    display:flex; align-items:center; gap:12px; padding:14px 16px;
+  }
+  .title{
+    font-weight:800; letter-spacing:-.3px; font-size:1.2rem;
+    background:linear-gradient(90deg, var(--accent), var(--accent-2));
+    -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+  }
+  .appbar::after{
+    content:""; position:absolute; left:0; bottom:0; width:100%; height:5px;
+    border-radius:0 0 12px 12px;
+    background:linear-gradient(90deg,var(--accent),var(--accent-2));
+    opacity:.9; pointer-events:none;
+  }
+  .spacer{flex:1}
+  .chip{ display:inline-flex; align-items:center; gap:8px; padding:6px 10px; border-radius:999px;
+    border:1px solid var(--border); background:#fff; color:var(--muted); font-weight:700; font-size:.9rem }
+
+  /* Panels – gradient border like flashcard */
+  .panel{
+    background:
+      linear-gradient(0deg, #fff, #fff) padding-box,
+      linear-gradient(135deg, var(--accent), var(--accent-2)) border-box;
+    border:1px solid transparent; border-radius:var(--radius);
+    box-shadow:var(--shadow); padding:16px;
+  }
+  .panel h3{ margin:0 0 10px; font-size:1.02rem; font-weight:800; letter-spacing:-.2px; color:#0f172a }
+
+  /* Buttons */
+  .btn{
+    appearance:none; border:1px solid var(--border); background:#fff; color:var(--ink);
+    border-radius:12px; padding:12px 16px; font-weight:800; cursor:pointer; box-shadow:var(--shadow);
+    transition: background .12s ease, border-color .12s ease, transform .06s ease;
+  }
+  .btn:hover{ background:var(--tint-1) }
+  .btn:active{ transform: translateY(1px) }
+  .btn:disabled{ opacity:.6; cursor:not-allowed; box-shadow:none }
+  .btn-primary{ background:linear-gradient(180deg, var(--accent), #0b9ed6); color:#fff; border-color:transparent }
+  .btn-ghost{ background:#f1f5f9 }
+
+  /* Two-column layout (20% : 80%) */
+  .main{ display:flex; gap:16px; align-items:flex-start; }
+  .panel-left{ flex:0 0 20%; }
+  .panel-right{ flex:1; }
+  @media(max-width:900px){
+    .main{ flex-direction:column; }
+    .panel-left, .panel-right{ flex:unset; }
+  }
+
+  /* Left: picker vertical */
+  .picker{ display:flex; flex-direction:column; align-items:stretch; gap:12px }
+  #fileInput{ display:none; }
+  .filename{ font-weight:800; color:#0f172a; background:#fff; border:1px dashed var(--border);
+    border-radius:12px; padding:10px 14px; min-height:44px; display:flex; align-items:center; justify-content:center }
+  .unit-buttons{ display:flex; flex-direction:column; gap:8px; }
+  .unit-buttons .btn{ width:100%; text-align:left }
+
+  /* Right: modules list */
+  .modules{ display:flex; flex-direction:column; gap:12px }
+  .menu{
+    display:flex; align-items:center; justify-content:space-between; gap:14px;
+    padding:16px 18px; border-radius:14px; text-decoration:none; color:var(--ink); font-weight:900;
+    background:#fff; border:1px solid var(--border); box-shadow:var(--shadow);
+    transition: transform .05s ease, background .12s ease;
+  }
+  .menu:hover{ transform:translateY(-1px); background:var(--tint-1); }
+  .menu .right{ color:#475569; font-weight:800; font-size:.92rem }
+
+  /* Tone-on-Tone C tags */
+  .m1{ border-color:#14b8a6; background:linear-gradient(180deg,#a7f3d0,#e6fffb); }
+  .m2{ border-color:#93c5fd; background:linear-gradient(180deg,#bfdbfe,#eef6ff); }
+  .m3{ border-color:#a78bfa; background:linear-gradient(180deg,#ddd6fe,#f5f0ff); }
+
+  .muted{ color:#64748b }
 </style>
 </head>
 <body>
   <div class="wrap">
-    <div class="card">
-      <h1>🏡 영어 놀이터 ✨</h1>
+    <header class="appbar">
+      <div class="title">🏡 영어 놀이터</div>
+      <div class="spacer"></div>
+      <div class="chip">세션 파일: <b id="chipFile">없음</b></div>
+    </header>
 
-      <div class="picker">
-        <input id="fileInput" type="file" accept=".json,.txt"/>
-        <label for="fileInput" class="pick-btn">📂 문장 파일 선택</label>
-        <span id="fileName" class="filename">파일을 선택하세요</span>
-      </div>
+    <div class="main">
+      <section class="panel panel-left">
+        <h3>문장 파일 선택</h3>
+        <div class="picker">
+          <input id="fileInput" type="file" accept=".json,.txt"/>
+          <label for="fileInput" class="btn">📂 로컬파일</label>
 
-      <div class="grid">
-        <a href="flashcard_game_mid.html" class="menu m1">
-          <div>🧠 단어 카드 게임</div>
-          <div>➜</div>
-        </a>
-        <a href="sentence_practice.html" class="menu m2" id="linkPractice">
-          <div>🎙️ 발음 연습 놀이</div>
-          <div class="fname" id="fnamePractice">파일 필요</div>
-        </a>
-        <a href="sentence_recorder.html" class="menu m3" id="linkRecorder">
-          <div>🧩 문장 만들기 게임</div>
-          <div class="fname" id="fnameRecorder">파일 필요</div>
-        </a>
-      </div>
+          <div class="unit-buttons">
+            <button id="btnOrt1" class="btn">🔗 ORT 5-15</button>
+            <button id="btnOrt2" class="btn">🔗 ORT 5-16</button>
+            <button id="btnOrt3" class="btn">🔗 ORT 5-17</button>
+            <button id="btnOrt4" class="btn">🔗 ORT 5-18</button>
+            <button id="btnOrt5" class="btn">🔗 ORT 5-19</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel panel-right">
+        <h3>학습 모듈</h3>
+        <div class="modules">
+          <a href="flashcard_game.html" class="menu m1">
+            <div>🧠 단어 카드 게임</div>
+            <div class="right">열기 ➜</div>
+          </a>
+          <a href="sentence_practice.html" class="menu m2" id="linkPractice">
+            <div>🎙️ 발음 연습 놀이</div>
+            <div class="right" id="fnamePractice">파일 필요</div>
+          </a>
+          <a href="sentence_recorder.html" class="menu m3" id="linkRecorder">
+            <div>🧩 문장 만들기 게임</div>
+            <div class="right" id="fnameRecorder">파일 필요</div>
+          </a>
+        </div>
+      </section>
     </div>
   </div>
 
 <script>
+// --- parse (same behavior) ---
 function parseToSentences(text, filename){
   const lower=(filename||'').toLowerCase();
   if(lower.endsWith('.json')){
@@ -93,11 +189,11 @@ const input=document.getElementById('fileInput');
 const fileNameEl=document.getElementById('fileName');
 const fname1=document.getElementById('fnamePractice');
 const fname2=document.getElementById('fnameRecorder');
+const chip=document.getElementById('chipFile');
 
 function setNames(name){
   fname1.textContent=name||'파일 필요';
-  fname2.textContent=name||'파일 필요';
-  fileNameEl.textContent=name||'파일을 선택하세요';
+  fname2.textContent=name||'파일 필요';chip.textContent=name||'없음';
 }
 
 input.addEventListener('change', async (e)=>{
@@ -111,6 +207,44 @@ input.addEventListener('change', async (e)=>{
   setNames(f.name);
 });
 
+// ---- Repo loader (Theme C pattern) ----
+const BASE_URL = 'https://raw.githubusercontent.com/MyBestTutor/stella/main/';
+async function fetchText(url){
+  const bust = (url.includes('?') ? '&' : '?') + 'v=' + Date.now();
+  const res = await fetch(url + bust, {cache:'no-store'});
+  if(!res.ok) throw new Error('HTTP '+res.status);
+  return await res.text();
+}
+async function loadRepoFile(rel, fallbackRel){
+  try{
+    const text = await fetchText(BASE_URL + rel);
+    const list = parseToSentences(text, rel);
+    if(!list || list.length===0) throw new Error('문장 목록이 비어 있음');
+    sessionStorage.setItem('SENTENCE_LIST_JSON', JSON.stringify(list));
+    sessionStorage.setItem('SENTENCE_FILE_NAME', rel);
+    setNames(rel);
+  }catch(e){
+    try{
+      const text2 = await fetchText(fallbackRel || ('./'+rel));
+      const list2 = parseToSentences(text2, rel);
+      if(!list2 || list2.length===0) throw new Error('문장 목록이 비어 있음');
+      sessionStorage.setItem('SENTENCE_LIST_JSON', JSON.stringify(list2));
+      sessionStorage.setItem('SENTENCE_FILE_NAME', rel);
+      setNames(rel);
+    }catch(e2){
+      alert('불러오기 실패: ' + (e2?.message||e?.message||e));
+    }
+  }
+}
+
+// ORT buttons mapping (underscore filenames)
+document.getElementById('btnOrt1')?.addEventListener('click', ()=>loadRepoFile('ort_5_15.json','./ort_5_15.json'));
+document.getElementById('btnOrt2')?.addEventListener('click', ()=>loadRepoFile('ort_5_16.json','./ort_5_16.json'));
+document.getElementById('btnOrt3')?.addEventListener('click', ()=>loadRepoFile('ort_5_17.json','./ort_5_17.json'));
+document.getElementById('btnOrt4')?.addEventListener('click', ()=>loadRepoFile('ort_5_18.json','./ort_5_18.json'));
+document.getElementById('btnOrt5')?.addEventListener('click', ()=>loadRepoFile('ort_5_19.json','./ort_5_19.json'));
+
+// Restore filename on load
 (function(){
   const n=sessionStorage.getItem('SENTENCE_FILE_NAME');
   if(n){ setNames(n); }

@@ -435,7 +435,7 @@ async function loadFromRepo(relPath){
     alert('저장소 JSON 불러오기 실패:\\n' + (e?.message || e));
   }
 }
-const BASE_URL = 'https://raw.githubusercontent.com/MyBestTutor/alex/main/';
+const BASE_URL = 'https://raw.githubusercontent.com/MyBestTutor/stella/main/';
 $('loadRepoUnit1').onclick = ()=> loadFromRepo(BASE_URL + 'words_unit1.json');
 
 /* ===== Flexible JSON Parser (kept) ===== */
